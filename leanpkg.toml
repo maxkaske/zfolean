@@ -1,0 +1,8 @@
+[package]
+name = "zfolean"
+version = "0.1"
+lean_version = "leanprover-community/lean:3.26.0"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "6b83e72814a606b4896f124908159309f3cb8038"}
