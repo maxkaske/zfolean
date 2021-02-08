@@ -68,19 +68,19 @@ prefix `∃!`:110 := unique_ex
 
 -- reducing terms helps with evaluating lifts and substituions
 -- however, pred_symbols and func_symbols will make more difficult:                        
-#reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄∈' 𝒫#1) ↑ 1 ＠ 1                   
+#reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄ ∈' 𝒫#1) ↑ 1 ＠ 1                   
 /-
 ((pred pred_symbols.elem).papp (func func_symbols.empty)).papp (func func_symbols.omega) ∧'
   ((pred pred_symbols.elem).papp
      (((func func_symbols.pair).fapp (func func_symbols.empty)).fapp
-        ((func func_symbols.unionset_ax).fapp
+        ((func func_symbols.union).fapp
            (((func func_symbols.pair).fapp (((func func_symbols.pair).fapp #4).fapp #4)).fapp
               (((func func_symbols.pair).fapp (((func func_symbols.pair).fapp #4).fapp #4)).fapp
                  (((func func_symbols.pair).fapp #4).fapp #4)))))).papp
     ((func func_symbols.power).fapp #2)
 -/
 
--- this seems to makes reduced terms and formulas much easier to read
+-- this seems helps pretty printing reduced terms and formulas and makes them much easier to read
 notation `'⌀` := func func_symbols.empty
 notation `'ω` := func func_symbols.omega
 notation `'⋃` t :=  fapp (func func_symbols.union) t
@@ -93,7 +93,7 @@ notation s ` '⊆ `:100 t := papp (papp (pred pred_symbols.subset) s) t
 -- after
 #reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄∈' 𝒫#1) ↑ 1 ＠ 1      
 /-
-('⌀ '∈ 'ω) ∧' '{ '⌀ , '⋃'{ '{ #4 , #4 } , '{ '{ #4 , #4 } , '{ #4 , #4 } } } } '∈ '𝒫#2
+  ('⌀ '∈ 'ω) ∧' '{ '⌀ , '⋃'{ '{ #4 , #4 } , '{ '{ #4 , #4 } , '{ #4 , #4 } } } } '∈ '𝒫#2
 -/
 -- much better
 
@@ -149,11 +149,11 @@ begin
     have h₁ : 0 ≤ k+3, from (k+3).zero_le,
     have h₂ : 1 ≤ k+3, by linarith,
     have h₃ : 2 ≤ k+3, by linarith,
-    have H₁ : (φ ↑ 1 ＠ 0) ↑ 1 ＠ (k + 4) = φ  ↑  1 ＠ 0, from
+    have H₁ : (φ ↑ 1 ＠ 0) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 0,
       begin rw ←(lift_lift φ 1 1 h₁), congr, exact H, end,
-    have H₂: (φ ↑ 1 ＠ 1) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 1, from
+    have H₂ : (φ ↑ 1 ＠ 1) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 1,
       begin rw ←(lift_lift φ 1 1 h₂), congr, exact H, end,
-    have H₃: (φ ↑ 1 ＠ 2) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 2, from
+    have H₃ : (φ ↑ 1 ＠ 2) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 2,
       begin rw ←(lift_lift φ 1 1 h₃), congr, exact H, end,
     rw closed at H, clear h₂,
     simp[*, closed],
@@ -180,20 +180,28 @@ end replacement
 @[simp] def replacement := replacement.sentence
 
 
--- @[simp] def subset_ax   : formula L := ∀' ∀' ( #0 ⊆' #1  ↔' ∀' (#0 ∈' #1 →' #0 ∈' #2) )
+-- axioms
 @[simp] def extensionality : formula L := ∀' ∀' ( (∀' (#0 ∈' #1 ↔' #0 ∈' #2)) →' (#0 =' #1) )
-@[simp] def emptyset_ax : formula L := ∀' (#0 ∈' ⌀ ↔' ¬'(#0 =' #0) )
-@[simp] def pairset_ax  : formula L := ∀' ∀' ∀' ( #0 ∈' ⦃ #1 , #2 ⦄ ↔' (#0 =' #1 ∨' #0 =' #2))
-@[simp] def unionset_ax : formula L := ∀' ∀' ( #0 ∈' ⋃#1 ↔' ∃'( #1 ∈' #0 ∧' #0 ∈' #2))
-@[simp] def powerset_ax : formula L := ∀' ∀' (#0 ∈' 𝒫#1 ↔' #0 ⊆' #1)
-@[simp] def omega_ax    : formula L := ∀' (#0 ∈' ω ↔' ∀'( (#0 is_inductive) →' #1 ∈' #0))
-@[simp] def mem_induction  (φ  : formula L){k : ℕ} (H: closed (k+1) φ) : formula L  
+@[simp] def emptyset_ax    : formula L := ∀' (#0 ∈' ⌀ ↔' ¬'(#0 =' #0) )
+@[simp] def pairset_ax     : formula L := ∀' ∀' ∀' ( #0 ∈' ⦃ #1 , #2 ⦄ ↔' (#0 =' #1 ∨' #0 =' #2))
+@[simp] def unionset_ax    : formula L := ∀' ∀' ( #0 ∈' ⋃#1 ↔' ∃'( #1 ∈' #0 ∧' #0 ∈' #2))
+@[simp] def powerset_ax    : formula L := ∀' ∀' (#0 ∈' 𝒫#1 ↔' #0 ⊆' #1)
+@[simp] def omega_ax       : formula L := ∀' (#0 ∈' ω ↔' ∀'( (#0 is_inductive) →' #1 ∈' #0))
+-- axiom schemes
+@[simp] def mem_induction  (φ : formula L) {k : ℕ} (H: closed (k+1) φ) : formula L  
   := alls k (∀'(∀'(#0 ∈' #1 →' (φ →' (φ ↑ 1 ＠ 0)))) →' (∀'φ))
-@[simp] def separation_ax (φ  : formula L){k : ℕ} (H: closed (k+2) φ) : formula L 
+@[simp] def separation_ax  (φ : formula L) {k : ℕ} (H: closed (k+2) φ) : formula L 
   := separation φ H
-@[simp] def replacement_ax {k : ℕ} (φ : formula L) (H: closed (k+3) φ) : formula L 
+@[simp] def replacement_ax (φ : formula L) {k : ℕ} (H: closed (k+3) φ) : formula L 
   := replacement φ H
 
+-- optional: definition of the subset predicate
+-- @[simp] def subset_def   : formula L := ∀' ∀' ( #0 ⊆' #1  ↔' ∀' (#0 ∈' #1 →' #0 ∈' #2) )
+
+/-
+ * The following lemmas provide a convenient way to make explicit which axioms are used inside our proofs.
+ * For separation and replacement we can use separation.mem and replacement.mem respectively.
+-/
 lemma extensionality_mem {Γ: set $ formula L}{φ}(h: φ = extensionality)(H: extensionality ∈ Γ) : φ ∈ Γ :=
 begin subst h, exact H end
 lemma emptyset_ax_mem {Γ: set $ formula L} {φ} (h: φ = emptyset_ax) (H: emptyset_ax ∈ Γ)  : φ ∈ Γ :=
@@ -210,7 +218,7 @@ lemma mem_induction_mem {Γ:set $ fol.formula L} {ψ} (φ k) (φ_h: closed (k+1)
   ( h : ψ = mem_induction φ φ_h) (H: (mem_induction φ φ_h) ∈ Γ) : ψ ∈ Γ := 
 begin subst h, exact H end
 
-
+/-- The set all ∈-induction axioms -/
 def mem_induction_scheme : set $ fol.formula L
   := { (mem_induction φ φ_h) |  (φ : formula L) (k: ℕ) (φ_h : closed (k+1) φ) }
 
@@ -226,6 +234,9 @@ begin
   exact φ_h,
 end
 
+/--
+  The set of axioms for IZF.
+-/
 def izf_ax : set $ formula L := { extensionality, emptyset_ax, pairset_ax, 
                                   unionset_ax, powerset_ax, omega_ax } 
                                   ∪ mem_induction_scheme
@@ -248,30 +259,39 @@ end
 lemma lift_izf_ax {m i : ℕ}: (λ (ϕ: formula L) , ϕ ↑ m ＠ i) '' izf_ax = izf_ax 
   := lift_set_of_sentences_id izf_ax_set_of_sentences
 
+/--
+  TODO : think of a good term to refer to the free variable "places"(?)
+  Proof scheme showing uniqueness of a set X = { x | φ(x) } defined by a formula  φ,
+  provided φ does not reference X.
 
+  Uses: extensionality
+-/
 def extensionality_implies_uniqueness (φ : formula L)
   : {extensionality} ⊢ unique_in_var0  ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1)) :=
 begin
-  apply allI, -- y_1
-  apply allI, -- y_0
-  apply impI,
-  apply impE (∀' (#0 ∈' #1 ↔' #0 ∈' #2)),
-  { apply allI, -- x
-    -- stack a b y_1 y_0 x
+  apply allI, -- y₁
+  apply allI, -- y₀
+  apply impI, -- assume `∀ x ( x ∈ y₀ ↔ φ(x, y₀)) ∧ ∀ x (x ∈ y₁ ↔ φ(x,y₁))`
+  apply impE (∀' (#0 ∈' #1 ↔' #0 ∈' #2)), 
+  { -- y₁ y₀ ⊢ (∀' (#0 ∈' #1 ↔' #0 ∈' #2))
+    apply allI, -- x
     apply iffI_trans (φ ↑ 2 ＠  1), 
-    { apply allE_var0, 
+    { -- y₁ y₀ x ⊢ x ∈ y₀ ↔ φ (x, y₀)
+      apply allE_var0, 
       apply andE₁ _ , 
       apply hypI, 
       -- meta argument
       simp [set.image_insert_eq],
       simp [subst_var0_for_0_lift_by_1, lift_lift_merge φ 1] },
-    { apply iffI_symm, 
+    { -- y₁ y₀ x ⊢ φ (x, y₁) ↔ x ∈ y₁
+      apply iffI_symm, 
       apply allE_var0, 
       apply andE₂ _ , 
       apply hypI,
       -- meta argument
       simp [set.image_insert_eq] } },
-  { apply allE_var0,
+  { -- y₁ y₀ ⊢ ∀ x (x ∈ y₀ ↔ x ∈ y₁) → y₀ = y₁
+    apply allE_var0,
     apply allE' _ #1,
     apply weak1,
     apply hypI, 
@@ -279,7 +299,14 @@ begin
     simp,
     simp, },
 end
+/--
+  A proof scheme showing uniqueness of sets x₀ = { x | ψ(x) } defined by a formula φ,
+  provided ψ does not reference x₀ (i.e. the free variable at place 0).
 
+  In technical terms this means that `p` is of the form `ψ = φ ↑ 1 ＠ 1`. 
+
+  Uses:  extensionality
+-/
 def extensionality_implies_uniqueness' {Γ} (φ) {ψ} (h: ψ = ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1) ) ) (H: extensionality ∈ Γ)  
   : Γ ⊢ unique_in_var0 ψ :=
 begin
@@ -288,6 +315,14 @@ begin
   exact H,
 end
 
+/--
+  Proof scheme showing uniqueness of x₁ = { x | φ(x, x₂, ... ) } defined by a formula φ
+  for all x₁ ... xₙ, provided φ does not reference x₁.
+
+  Note: The formula shown is not necesserily a sentence.
+
+  Uses: extensionality
+-/
 def extensionality_implies_uniqueness_alls  (n)  (φ : formula L)
   : {extensionality} ⊢ alls n (unique_in_var0 ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1))) :=
 begin
@@ -298,6 +333,14 @@ begin
   exact ⟨ set.mem_singleton _ , rfl ⟩,
 end
 
+/--
+  Proof scheme showing uniqueness of x₁ = { x | φ(x, x₂, ... ) } defined by a formula φ
+  for all x₁ ... xₙ, provided φ does not reference x₁.
+
+  Note: The formula shown is not necesserily a sentence.
+
+  Uses: separation for the formula φ with (k+2) free variables.
+-/
 def separation_proof_scheme 
   (φ k) (φ_h₁: closed (k+2) φ)         -- given a formula φ(x_1,...,x_{k+1})
   (φ_h₂ : ∃ ϕ : formula L , φ = ϕ ↑ 1 ＠ 1) -- such that the x₂ is not among its free variables
@@ -306,22 +349,27 @@ def separation_proof_scheme
   : Γ ⊢ alls k (∃' ∀'((#0 ∈' #1) ↔' φ)) :=
 begin
   apply allsI,
-  apply exE ∀'( φ →' (#0 ∈' #1)),
-  { apply allsE',
+  apply exE ∀'( φ →' (#0 ∈' #1)), -- A with ∀ x (φ → x ∈ A) 
+  { -- xₖ ... x₁ ⊢ ∃ A ∀x (φ → x ∈ A)
+    apply allsE',
     exact H },
-  { apply exE (∀'( (#0 ∈' #1) ↔' ( (#0 ∈' #2) ∧' (φ   ↑ 1 ＠  1) ))),
-    { apply weak1, 
+  { -- xₖ ... x₁ A ⊢ ∃ B ∀ x (x ∈ B ↔ φ )
+    apply exE (∀'( (#0 ∈' #1) ↔' ( (#0 ∈' #2) ∧' (φ ↑ 1 ＠ 1 ) ))), -- B with ∀ x (x ∈ B ↔ x ∈ A ∧ φ )
+    { -- xₖ ... x₁ A ⊢ ∃ B ∀ x (x ∈ B ↔ x ∈ A ∧ φ )
+      apply weak1, 
       apply allsE' 1,
       apply allsE' k,
       rw [alls,alls],
       apply hypI,
+      -- meta
       apply separation.mem_of φ k φ_h₁ (rfl),
       assumption, },
-    { apply exI #0,
-      apply allI,
+    { -- A B ⊢ ∃ B ∀ x (x ∈ B ↔ φ ) 
+      apply exI #0,
+      apply allI, -- x
       apply andI,
-      { 
-        apply impI,
+      { -- A B x ⊢ x ∈ B → φ
+        apply impI, -- assume `x ∈ B`
         apply andE₂ (#0 ∈' #2),
         apply impE_insert,
         apply iffE_r,
@@ -335,31 +383,39 @@ begin
         rw [subst_var0_lift_by_1, subst_var0_lift_by_1],
         rw [←lift_lift ψ _ _ (le_refl 1)], 
         refl },
-      { apply impI,
+      { --  A B x ⊢ φ → x ∈ B
+        apply impI, -- assume `φ`
         apply impE (#0 ∈' #2),
-        { apply impE (φ ↑ 1 ＠ 1),
-          {
+        { --  A B x ⊢ x ∈ A
+          apply impE (φ ↑ 1 ＠ 1),
+          { -- A B x ⊢ φ 
             apply hypI,
             left,
             cases φ_h₂ with ψ ψ_h,
             subst ψ_h,
             rw [subst_var0_lift_by_1, ←lift_lift ψ _ _ (le_rfl)] },
-          {
+          { -- A B x ⊢ φ → x ∈ A
             apply allE_var0, 
             apply hypI,
             -- meta
             simp only [set.image_insert_eq],
             right, right, left, refl } },
-        { apply impI,
+        { --  A B x ⊢ x ∈ A → x ∈ B
+          apply impI, -- assume `x ∈ A` 
           apply impE (#0 ∈' #2 ∧' (φ ↑ 1 ＠ 1)),
-          { apply andI, 
-            { apply hypI1 },
-            { apply hypI,
+          { -- A B x ⊢ x ∈ A ∧ φ 
+            apply andI, 
+            { -- A B x ⊢ x ∈ A
+              apply hypI1 },
+            { -- A B x ⊢ φ 
+              apply hypI,
+              -- meta
               right, left,
               cases φ_h₂ with ψ ψ_h,
               subst ψ_h,
               rw [subst_var0_lift_by_1, lift_lift ψ _ _ (le_rfl)] } },
-          { apply iffE_l, 
+          { -- A B x ⊢  x ∈ A ∧ φ → x ∈ B
+            apply iffE_l, 
             apply allE_var0, 
             apply hypI,
             --meta
@@ -378,37 +434,58 @@ begin
   apply separation_proof_scheme (φ ↑ 1 ＠ 1) k φ_h (by use φ) h H,
 end
 
+/-- 
+  A proof of the defining property of the singleton set `{a} := {a,a}`, 
+  derived from the pairset axiom.
+
+  Informally: `{pairset_ax} ⊢ ∀ a : {a} = { x | x = a }`.
+-/
 def singleton_def: {pairset_ax} ⊢ ∀' ∀' (#0 ∈' ⦃ #1 ⦄ ↔' #0 =' #1) :=
 begin
-  apply allI,
-  apply allI,
+  apply allI, -- a
+  apply allI, -- x
   apply andI,
-  { apply impI,
+  { -- a x ⊢ x ∈ {a} → x = a
+    apply impI, -- assume `x ∈ {a}`
     apply orE (#0 =' #1) (#0 =' #1),
-    { apply impE_insert,
-      apply andE₁,
-      apply allE' _ #0,
+    { -- a x ⊢ x = a ∨ x = a 
+      apply impE_insert,
+      apply iffE_r,
+      apply allE_var0,
       apply allE' _ #1,
       apply allE' _ #1,
       apply hypI,
+      -- meta
       apply pairset_ax_mem (rfl),
       all_goals {simp [set.image_singleton] } },
-    { apply hypI1, },
-    { apply hypI1, },
+    { -- assume x = a
+      -- a x ⊢  x = a
+      apply hypI1 },
+    { -- assume x = a
+      -- a x ⊢  x = a
+      apply hypI1 },
   },
-  { apply impI,
+  { -- a x ⊢ x = a → x ∈ {a}
+    apply impI, -- assume `x = a`
     apply impE (#0 =' #1 ∨' #0 =' #1),
-    { apply orI₁, 
+    { -- a x ⊢ x = a ∨ x = a 
+      apply orI₁, 
       apply hypI1, },
-    { apply andE₂, 
-      apply allE' _ #0,
+    { -- a x ⊢ (x = a ∨ x = a ) → x ∈ {a}
+      apply iffE_l, 
+      apply allE_var0,
       apply allE' _ #1,
       apply allE' _ #1,
       apply hypI,
+      -- meta
       apply pairset_ax_mem (rfl),
       all_goals {simp [set.image_singleton] } } }
 end
 
+/--
+  Informally: `Γ ⊢ φ` provided `φ = ∀ a : { a } = { x | x = a }`
+  and `pairset_ax ∈ Γ`.
+-/
 def singleton_def' {Γ} {φ : formula L} (h₁: φ = ∀' ∀' (#0 ∈' ⦃ #1 ⦄ ↔' #0 =' #1)) (h₂ : pairset_ax ∈ Γ ) :
   Γ  ⊢ φ  :=
 begin
@@ -418,63 +495,95 @@ begin
   assumption,
 end
 
+/--
+  A formal proof of the defining property of the binary union `a ∪ b := ⋃{a,b}`
+  derived from the pairset and unionset axioms.
+
+  Informally: `{pairset_ax, unionset_ax} ⊢ ∀b ∀a : a ∪ b = { x | x ∈ a ∨ x ∈ b }`.
+-/
 def binary_union_def : {pairset_ax, unionset_ax} ⊢ ∀' ∀' ∀' (#0 ∈' ⋃ ⦃ #1, #2 ⦄ ↔' #0 ∈' #1 ∨' #0 ∈' #2) :=
 begin
-  apply allI,
-  apply allI,
-  apply allI,
+  apply allI, -- b
+  apply allI, -- a
+  apply allI, -- x
   apply andI,
-  { apply impI,
-    apply exE (#1 ∈' #0 ∧' #0 ∈' ⦃#2 , #3⦄),
-    { apply impE_insert, 
+  { -- b a x ⊢ x ∈ a ∪ b → x ∈ a ∨ x ∈ b
+    apply impI,  -- assume `x ∈ a ∪ b`
+    apply exE (#1 ∈' #0 ∧' #0 ∈' ⦃#2 , #3⦄), -- y with `x ∈ y ∧ y ∈ {a,b}`
+    { -- b a x ⊢ ∃y (x ∈ y ∧ y ∈ {a,b})
+      apply impE_insert, 
       apply iffE_r, 
       apply allE' _ #0,
       apply allE' _ ⦃#1 , #2⦄,
       apply hypI,
+      -- meta
       apply unionset_ax_mem (rfl),
       all_goals { try { simp[set.image_insert_eq], }, },
       split; refl },
-    { apply impE (#0 =' #2 ∨' #0 =' #3),
-      { apply impE (#0 ∈'  ⦃#2 , #3⦄ ),
-        { apply andE₂, 
+    { -- b a x y ⊢ x ∈ a ∨ x ∈ b
+      apply impE (#0 =' #2 ∨' #0 =' #3),
+      { -- b a x y ⊢ y = a ∨ y = b
+        apply impE (#0 ∈'  ⦃#2 , #3⦄ ),
+        { -- b a x y ⊢ y ∈ {a,b}
+          apply andE₂, 
           apply hypI1 },
-        { apply iffE_r ,
+        { -- b a x y ⊢ y ∈ {a,b} →  y = a ∨ y = b
+          apply iffE_r ,
           apply allE' _ #0,
           apply allE' _ #2,
           apply allE' _ #3,
           apply hypI,
+          -- meta
           apply pairset_ax_mem (rfl),
           all_goals { try { simp[set.image_insert_eq] } },
           split; refl } },
-      { apply impI,
+      { -- b a x y ⊢ y = a ∨ y = b → x ∈ a ∨ x ∈ b 
+        apply impI, -- assume `y = a ∨ y = b`
         apply orE (#0 =' #2) (#0 =' #3),
-        { apply hypI1, },
-        { apply orI₁,
+        { -- b a x y ⊢ y = a ∨ y = b
+          apply hypI1, },
+        { -- assume `y = a`
+          -- b a x y ⊢ x ∈ a ∨ x ∈ b
+          apply orI₁,
           apply eqE' #0 #2 (#2 ∈' #0),
-          { apply hypI1, },
-          { apply andE₁,
+          { -- b a x y ⊢ y = a
+            apply hypI1, },
+          { -- b a x y ⊢ x ∈ y
+            apply andE₁,
             apply hypI, 
             simp[set.image_insert_eq] },
           { refl } },
-        { 
+        { -- assume `y = b`
+          -- b a x y ⊢ x ∈ a ∨ x ∈ b
           apply orI₂,
           apply eqE' #0 #3 (#2 ∈' #0),
-          { apply hypI1, },
-          { apply andE₁,
+          { -- b a x y ⊢ y = b
+            apply hypI1, },
+          { -- b a x y ⊢ x ∈ y
+            apply andE₁,
             apply hypI, 
             simp[set.image_insert_eq] },
           { refl } } } } },
-  { apply impI,
+  { -- b a x ⊢ (x ∈ a ∨ x ∈ b) → x ∈ a ∪ b
+    apply impI, -- assume `(x ∈ a) ∨ (x ∈ b)`
     apply orE (#0 ∈' #1)  (#0 ∈' #2),
-    { apply hypI1 },
-    { -- case : x ∈ a
+    { -- b a x ⊢ (x ∈ a) ∨ (x ∈ b)
+      apply hypI1 },
+    { -- assume `x ∈ a`
+      -- b a x ⊢ x ∈ a ∪ b
       apply impE (∃'(#1 ∈' #0 ∧' #0 ∈'  ⦃#2 , #3⦄)),
-      { apply exI #1, 
+      { -- b a x ⊢ ∃y (x ∈ y ∧ y ∈ {a,b})
+        apply exI #1, 
         apply andI,
-        { apply hypI1, },
-        { apply impE (#1 =' #1 ∨' #1 =' #2),
-          { apply orI₁, apply eqI, },
-          { apply iffE_l,
+        { -- b a x ⊢ x ∈ a
+          apply hypI1, },
+        { -- b a x ⊢ a ∈ {a,b}
+          apply impE (#1 =' #1 ∨' #1 =' #2),
+          { -- b a x ⊢ (a = a ∨ a = b)
+            apply orI₁, 
+            apply eqI, },
+          { -- b a x ⊢ (a = a ∨ a = b) → a ∈ {a,b}
+            apply iffE_l,
             apply allE' _ #1,
             apply allE' _ #1,
             apply allE' _ #2,
@@ -482,22 +591,29 @@ begin
             apply pairset_ax_mem (rfl),
             all_goals { try { simp[set.image_insert_eq], }, },
             split; refl } } },
-      { apply andE₂ _ ,
-        apply allE' _ #0,
+      { -- b a x ⊢ ∃y ( x ∈ y ∧ y ∈ {a,b}) → x ∈ a ∪ b
+        apply iffE_l ,
+        apply allE_var0,
         apply allE' _ ⦃ #1 , #2 ⦄,
         apply hypI,
         apply unionset_ax_mem (rfl),
-
-        all_goals{ try { simp[set.image_insert_eq],}, },
-        split; refl } },
-    { -- case : x ∈ b
-      apply impE (∃'(#1 ∈' #0 ∧'  #0 ∈'  ⦃#2 , #3⦄)),
-      { apply exI #2, 
+        all_goals{ simp[set.image_insert_eq] },
+        refl } },
+    { -- assume `x ∈ b`
+      -- b a x ⊢ x ∈ a ∪ b
+      apply impE (∃'(#1 ∈' #0 ∧' #0 ∈' ⦃#2 , #3⦄)),
+      { -- b a x ⊢ ∃y (x ∈ y ∧ y ∈ {a,b})
+        apply exI #2, 
         apply andI,
-        { apply hypI1, },
-        { apply impE (#2 =' #1 ∨' #2 =' #2),
-          { apply orI₂, apply eqI, },
-          { apply andE₂ _,
+        { -- b a x ⊢ x ∈ b
+          apply hypI1, },
+        { -- b a x ⊢ b ∈ {a,b}
+          apply impE (#2 =' #1 ∨' #2 =' #2),
+          { -- b a x ⊢ (b = a ∨ b = b)
+            apply orI₂, 
+            apply eqI, },
+          { -- b a x ⊢ (b = a ∨ b = b) → a ∈ {a,b}
+            apply andE₂ _,
             apply allE' _ #2,
             apply allE' _ #1,
             apply allE' _ #2,
@@ -505,15 +621,20 @@ begin
             apply pairset_ax_mem (rfl),
             all_goals { try { simp[set.image_insert_eq], }, },
             split; refl } } },
-      { apply andE₂ _ ,
-        apply allE' _ #0,
+      { -- b a x ⊢ ∃y ( x ∈ y ∧ y ∈ {a,b}) → x ∈ a ∪ b
+        apply iffE_l ,
+        apply allE_var0,
         apply allE' _ ⦃ #1 , #2 ⦄,
         apply hypI,
         apply unionset_ax_mem (rfl),
-        all_goals { try { simp[set.image_insert_eq] } },
-        split; refl } } }
+        all_goals { simp[set.image_insert_eq] },
+        refl } } }
 end
 
+/--
+  Informally: `Γ ⊢ φ` provided `φ =  ∀ b ∀ a : a ∪ b = { x | x ∈ a ∨ x ∈ b }`
+  and `pairset_ax, unionset_ax ∈ Γ`.
+-/
 def binary_union_def' {Γ} {φ : formula L} (h₁: φ = ∀' ∀' ∀'(#0 ∈' ⋃ ⦃ #1, #2 ⦄ ↔' #0 ∈' #1 ∨' #0 ∈' #2) )
   (h₂: pairset_ax ∈ Γ ) (h₃ : unionset_ax ∈ Γ) : Γ  ⊢ φ :=
 begin
@@ -529,56 +650,79 @@ begin
     exact h₃ }
 end
 
-def successor_def : {pairset_ax, unionset_ax} ⊢ ∀' (#0 ∈' S#1 ↔' #0 ∈' #1 ∨' #0 =' #1) :=
+/--
+  A formal proof of the defining property of the successpor set `S(a) := a ∪ {a}` 
+  derived from the pairset and unionset axioms.
+
+  Informally: `{pairset_ax, unionset_ax} ⊢  ∀a : S(a) = { x | x ∈ a ∨ x = a }`.
+-/
+def successor_def : {pairset_ax, unionset_ax} ⊢ ∀' ∀' (#0 ∈' S#1 ↔' #0 ∈' #1 ∨' #0 =' #1) :=
 begin
-  apply allI,
+  apply allI, -- a
+  apply allI, -- x
   apply andI,
-  { apply impI,
+  { -- a x ⊢ x ∈ S(a) → x ∈ a ∨ x = a  
+    apply impI, -- assume `x ∈ S(a)`
     apply impE (#0 ∈' #1 ∨' #0 ∈' ⦃ #1 ⦄),
-    { apply impE (#0 ∈' S#1),
-      { apply hypI1, },
-      { apply andE₁ _ ,
-        apply allE' _ #0,
+    { -- a x ⊢ x ∈ a ∨ x ∈ {a}
+      apply impE (#0 ∈' S#1),
+      { -- a x ⊢ x ∈ S(a)
+        apply hypI1, },
+      { -- a x ⊢ x ∈ S(a) → x ∈ a ∨ x ∈ {a}
+        apply iffE_r,
+        apply allE_var0,
         apply allE' _ #1,
         apply allE' _ ⦃ #1 ⦄,
         apply binary_union_def' (rfl),
         all_goals{ simp[set.image_insert_eq] } } },
-    { apply impI,
+    { -- a x ⊢ x ∈ a ∨ x ∈ {a} → x ∈ a ∨ x = a
+      apply impI, -- assume `x ∈ a ∨ x ∈ {a}`
       apply orE (#0 ∈' #1) ( #0 ∈' ⦃ #1 ⦄),
-      { apply hypI1, },
-      { --case x∈a  
+      { -- a x ⊢ x ∈ a ∨ x ∈ {a}
+        apply hypI1, },
+      { -- assume `x ∈ a`
+        -- a x ⊢ x ∈ a ∨ x = a 
         apply orI₁,
         apply hypI1 },
-      { --case x∈{a} 
+      { -- assume `x ∈ {a}`
+        -- a x ⊢ x ∈ a ∨ x = a  
         apply orI₂,
         apply impE_insert,
-        apply andE₁ _ ,
-        apply allE' _ #0,
+        apply iffE_r,
+        apply allE_var0,
         apply allE' _ #1,
         apply singleton_def' (rfl),
         all_goals{ simp[set.image_insert_eq] } } } },
-  { apply impI,
+  { -- a x ⊢ x ∈ a ∨ x = a → x ∈ S(a)
+    apply impI, -- assume `x ∈ a ∨ x = a`
     apply orE (#0 ∈' #1) (#0 =' #1),
-    { apply hypI1, },
-    { -- case x ∈ a
+    { -- a x ⊢ x ∈ a ∨ x = a
+      apply hypI1, },
+    { -- assume `x ∈ a`
+      -- a x ⊢ x ∈ S(a)
       apply impE (#0 ∈' #1 ∨' #0 ∈' ⦃ #1 ⦄),
-      { apply orI₁, apply hypI1,},
-      { apply iffE_l, 
+      { -- a x ⊢ x ∈ a ∨ x ∈ {a}
+        apply orI₁, 
+        apply hypI1,},
+      { -- a x ⊢ x ∈ a ∨ x ∈ {a} → x ∈ S(a)
+        apply iffE_l, 
         apply allE' _ #0,
         apply allE' _ #1,
         apply allE' _ ⦃ #1 ⦄, 
         apply binary_union_def' (rfl),
         all_goals{ simp[set.image_insert_eq] } } },
-    { -- case x = a
+    { -- assume `x = a`
+      -- a x ⊢ x ∈ S(a)
       apply impE (#0 ∈' #1 ∨' #0 ∈' ⦃ #1 ⦄),
-      { apply orI₂, 
+      { -- a x ⊢ x ∈ a ∨ x ∈ {a}
+        apply orI₂, 
         apply impE_insert,
         apply iffE_l,
         apply allE' _ #0,
         apply allE' _ #1,
         apply singleton_def' (rfl),
         all_goals{ simp[set.image_insert_eq] } },
-      { 
+      { -- a x ⊢ x ∈ a ∨ x ∈ {a} → x ∈ S(a)
         apply iffE_l,
         apply allE' _ #0,
         apply allE' _ #1,
@@ -587,6 +731,12 @@ begin
         all_goals{ simp[set.image_insert_eq] } } } }
 end
 
+
+/--
+  A formal proof that omega exists and is unique derived from the omega axiom and extensionality.
+
+  Informally: `{omega_ax, extensionality} ⊢ ∃! w₀ : w₀ = { x | ∀ w : (w is inductive) →  x ∈ w }`.
+-/
 def omega_unique 
   : {omega_ax, extensionality} ⊢ ∃! ∀' (#0 ∈' #1 ↔' ∀'( (#0 is_inductive) →' #1 ∈' #0)) := 
 begin
@@ -600,74 +750,101 @@ begin
     simp }
 end
 
-def omega_subset_inductive: 
+/--
+  A formal proof that omega is a subset of all inductive sets derived from the omega axiom.
+
+  Informally: `{omega_ax} ⊢ ∀ w : (w is inductive) →  ω ⊆ w`.
+-/
+def omega_subset_all_inductive: 
   {omega_ax} ⊢  ∀' (#0 is_inductive →' (ω ⊆' #0))   :=
 begin
-  apply allI,
-  apply impI,
-  apply allI,
-  apply impI,
+  apply allI, -- w
+  apply impI, -- assume `w is inductive`
+  apply allI, -- x 
+  apply impI, -- assume `x ∈ ω`
   apply impE (#1 is_inductive),
-  { apply hypI, 
+  { -- w x ⊢ w is inductive
+    apply hypI, 
     simp [set.image_insert_eq] },
-  { apply allE' (#0 is_inductive →' #1 ∈' (#0)) #1,
+  { -- w x ⊢ (w is inductive) → x ∈ w 
+    apply allE' (#0 is_inductive →' #1 ∈' (#0)) #1,
     apply iffE₂ (#0 ∈' ω),
-    { apply hypI1 },
-    { apply allE_var0,
+    { -- w x ⊢ x ∈ ω
+      apply hypI1 },
+    { -- w x ⊢ x ∈ ω ↔ ∀ w ((w is inductive) → x ∈ w) 
+      apply allE_var0,
       apply hypI,
       apply omega_ax_mem,
       all_goals {simp[set.image_insert_eq] } },
     { refl } }
 end
 
-def omega_subset_inductive' {Γ} (h: omega_ax ∈ Γ) : 
+/--
+  Informally: `Γ ⊢ ∀ w : (w is inductive) →  ω ⊆ w from Γ`, provided `omega_ax ∈ Γ`.
+-/
+def omega_subset_all_inductive' {Γ} (h: omega_ax ∈ Γ) : 
   Γ ⊢  ∀' (#0 is_inductive →' (ω ⊆' #0))   :=
 begin
   apply weak {omega_ax},
-  exact omega_subset_inductive,
+  exact omega_subset_all_inductive,
   exact set.singleton_subset_iff.mpr h,
 end
 
+/-- 
+  A formal proof of `ω is inductive` derived from the omega axiom. 
+-/
 def omega_inductive :  {omega_ax} ⊢ ω is_inductive :=
 begin
   apply andI,
-  { apply impE ∀'(#0 is_inductive →' ⌀ ∈' #0), 
-    { apply allI,
+  { -- ⊢ ⌀ ∈ ω
+    apply impE ∀'(#0 is_inductive →' ⌀ ∈' #0), 
+    { -- ⊢ ∀ w ( w is inductive → ⌀ ∈ w)
+      apply allI,
       apply impI,
       apply andE₁,
       apply hypI,
       simp },
-    { apply iffE_l,
+    { -- ⊢ ∀ w ( w is inductive → ⌀ ∈ w) → ⌀ ∈ ω
+      apply iffE_l,
       apply allE' _ ⌀,
       apply hypI,
       apply omega_ax_mem (rfl),
       all_goals { simp } } },
-  { apply allI,
-    apply impI,
+  { -- ⊢ ∀ x ( x ∈ ω → S(x) ∈ ω)
+    apply allI, -- x
+    apply impI, -- assume `x ∈ ω`
     apply impE (∀'(#0 is_inductive →' S#1 ∈' #0)),
-    { apply allI,
-      apply impI,
+    { -- x  ⊢ ∀ w ( (w is inductive) → S(x) ∈ w)
+      apply allI, -- w
+      apply impI, -- assume `w is inductive`
       apply impE (#1 ∈' #0),
-      { apply impE (#1 ∈' ω),
-        { apply hypI,
+      { -- x w ⊢ x ∈ w
+        apply impE (#1 ∈' ω),
+        { -- x w ⊢ x ∈ ω
+          apply hypI,
           simp[set.image_insert_eq] },
-        { apply allE' (#0 ∈' ω →' #0 ∈' #1) #1,
+        { -- x w ⊢ x ∈ ω → x ∈ w
+          apply allE' (#0 ∈' ω →' #0 ∈' #1) #1,
           apply impE_insert,
           apply allE_var0,
-          apply omega_subset_inductive',
+          apply omega_subset_all_inductive',
           { simp [set.image_insert_eq] },
           { refl } } },
-      { -- unfold is_inductive,
+      { -- (x ∈ ω) (w is inductive) ⊢  x ∈ w → S(x) ∈ w
         apply allE' (#0 ∈' #1 →' S #0 ∈' #1) #1 _ (rfl),
         apply andE₂ _ ,
         apply hypI1 } },
-    { apply iffE_l,
+    { -- x ⊢ ∀ w ( (w is inductive) → S(x) ∈ w) → S(x) ∈ ω
+      apply iffE_l,
       apply allE' _ S#0,
       apply hypI,
       { simp [set.image_insert_eq] },
       { simp, } } }
 end
 
+/-- 
+  Informally:  `Γ ⊢ ω is inductive`, provided `omega_ax ∈ Γ`. 
+-/
 def omega_inductive' {Γ} (h: omega_ax ∈ Γ) : Γ  ⊢ ω is_inductive :=
 begin
   apply weak_singleton omega_ax,
@@ -675,10 +852,23 @@ begin
   exact h,
 end
 
-def omega_inductive_izf :  izf_ax ⊢ ω is_inductive :=
+/--
+  A formal proof that `ω` is the smallest inductive set derived from the axioms of IZF.
+
+  Informally : `{zfc_ax} ⊢ (ω is inductive) ∧ ∀ w :(w is inductive) → ω ⊆ w)`
+-/
+def omega_smallest_inductive : izf_ax ⊢ (ω is_inductive) ∧' ∀'((#0 is_inductive) →' ω ⊆' #0) :=
 begin
-  apply omega_inductive',
-  simp[izf_ax],
+  apply andI,
+  { apply omega_inductive', simp[izf_ax], },
+  { apply omega_subset_all_inductive', simp[izf_ax], },
 end
+
+/--
+  Main Theorem: IZF proves that ω is the smallest inductive set.
+-/
+theorem omega_smallest_inductive_provable_witin_izf : 
+  ((ω is_inductive) ∧' ∀'((#0 is_inductive) →' ω ⊆' #0)) is_provable_within izf_ax :=
+begin use omega_smallest_inductive end
 
 end izf 

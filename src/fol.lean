@@ -479,20 +479,6 @@ notation φ `[`:max t ` ⁄ `:95 n `]`:0 := formula.subst φ t n
  
 namespace formula
 open preformula
--- for easier reasoning in tactics mode
--- lemma subst_equal (t₁ t₂ s: term L) (n: ℕ) :
---     (t₁ =' t₂)[s⁄n] = t₁[s⁄n] =' t₂[s⁄n] := by refl
--- lemma subst_impr (f₁ f₂ : formula L) (s : term L) (n:ℕ) :
---     (f₁ →' f₂)[s⁄n] = f₁[s⁄n] →' f₂[s⁄n] := by refl
--- lemma subst_and (f₁ f₂ : formula L) (s : term L) (n:ℕ) :
---     (f₁ ∧' f₂) [s⁄n] = f₁[s⁄n] ∧' f₂[s⁄n] := by refl
--- lemma subst_or (f₁ f₂ : formula L) (s : term L) (n:ℕ) :
---     (f₁ ∨' f₂) [s⁄n] = f₁[s⁄n] ∨' f₂[s⁄n] := by refl
--- lemma subst_iff (f₁ f₂ : formula L) (s : term L) (n:ℕ) :
---     (f₁ ↔' f₂)[s⁄n] = f₁[s⁄n] ↔' f₂[s⁄n] := by refl
--- lemma subst_all (φ : formula L) (s : term L) (n:ℕ) :
---     (∀'φ)[s⁄n] = ∀' (φ[s ⁄ (n+1)]) := by refl
-
 
 -- lift and substitution lemmas for formulas; follow directly from the corresponding lemmas for terms
 
@@ -841,14 +827,19 @@ inductive proof : (set $ formula L) → formula L → Type u
 -- equality
 | eqI {Γ} (t) : proof Γ (t =' t)
 | eqE {Γ} {s t φ } (H₁ : proof Γ (s =' t)) (H₂ : proof Γ (φ[s ⁄ 0])) : proof Γ (φ [t ⁄ 0])
-
-
 infix ` ⊢ `:55 := proof 
+
+/-- 
+  `provable Γ φ` says that there exists a proof of `φ` under the hypotheses in `Γ`,
+  i.e. it is a fancy way to say that the type `Γ ⊢ φ` is non-empty. 
+-/
+def provable (φ : formula L) (Γ)  : Prop := nonempty (Γ ⊢ φ)
+infix ` is_provable_within `:100 := provable
 
 /--
   The law of excluded middle for when we want to argue in classical logic.
 -/
-def lem : set $ formula L := { (φ ∨' ¬'φ) |  (φ: formula L) (h: φ is_sentence') }
+def lem : set $ formula L := { (φ ∨' ¬'φ) |  (φ: formula L) (h: φ is_sentence') } -- do we need the extra condition?
 namespace proof
 /--
   Rule for weakening the context of a proof by allowing more premises.

@@ -65,7 +65,7 @@ begin
   have h₂: 1 ≤ k+2, by linarith,
   have h₃:  φ ↑  1 ＠  1 ↑ 1  ＠ (k + 3) = φ ↑ 1 ＠ 1,
     begin  rw ←(lift_lift φ 1 1 h₂), congr, exact H, end,
-  simp[h₁, h₃, memb, fol.iff],
+  simp[h₁, h₃],
 end
 
 @[simp] def sentence (φ  : fol.formula L) {k : ℕ} (H: fol.formula.closed (k+2) φ) : fol.formula L 
@@ -132,8 +132,6 @@ lemma mem_scheme (φ : fol.formula L) {k : ℕ} (φ_h: fol.formula.closed (k+3) 
   : sentence φ φ_h ∈ scheme := begin existsi [φ, k, φ_h], refl, end
 
 end replacement
-
-
 
 
 -- we need unique existential quantification for replacement, i.e. ∃! φ  = ∃x: φ(x) ∧ ∀x ∀y φ(x) ∧ φ(y) → x = y
@@ -211,11 +209,9 @@ lemma mem_zfc_ax (φ k) (φ_h: formula.closed (k+3) φ) : sentence φ φ_h ∈ z
 begin simp[-sentence, zfc_ax, mem_scheme], end
 end replacement
 
-
-
 -- Lemma: There exists a set.
 -- ⊢ ∃ x ( x = x )
-def let_there_be_light : (∅ : set $ formula L) ⊢ ∃' (#0 =' #0) :=
+def let_there_be_light : (∅ : set $ formula L) ⊢ ∃'(#0 =' #0) :=
 begin
   apply exI #0,
   apply eqI,
@@ -777,7 +773,7 @@ begin
 end
 
 def omega_subset_all_inductive : 
-  zfc_ax ⊢ ∀' (∀' ( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' ∀' (#0 is_inductive' →' #1 '⊆ #0) )  :=
+  zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' ∀' (#0 is_inductive' →' #1 '⊆ #0) )  :=
 begin
   apply allI,
   apply impI,
@@ -797,7 +793,7 @@ begin
     { dsimp, refl, } },
 end
 
-def omega_inductive :  zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' (#0 is_inductive')) :=
+def omega_inductive : zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' (#0 is_inductive')) :=
 begin
   apply allI,
   apply impI,
@@ -875,5 +871,25 @@ begin
       right, right, left, refl } },
 end
 
-#lint
+def omega_smallest_inductive : 
+  zfc_ax ⊢ ∃'((#0 is_inductive') ∧' ∀'((#0 is_inductive') →' #1 '⊆ #0)) :=
+begin
+  apply exE ∀' ( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)),
+  { apply omega_ex },
+  { apply exI #0,
+    apply andI,
+    { apply impE_insert,
+      apply allE_var0,
+      simp only [lift_zfc_ax],
+      apply omega_inductive },
+    { apply impE_insert,
+      apply allE_var0,
+      simp only [lift_zfc_ax],
+      apply omega_subset_all_inductive } },
+end
+
+theorem omega_smallest_inductive_provable_witin_zfc :
+ (∃'((#0 is_inductive') ∧' ∀'((#0 is_inductive') →' #1 '⊆ #0))) is_provable_within zfc_ax :=
+begin use omega_smallest_inductive, end
+
 end zfc
