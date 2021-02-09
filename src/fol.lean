@@ -774,7 +774,7 @@ begin
 end 
 
 /--
-  The (universal) closure of `k` closed formula.
+  The (universal) closure of a `k`-closed formula.
   Intuitively, given a formula `φ` with free variables among `x₁ ... xₖ` 
   the closure is `∀xₖ ... ∀x₁ φ`. 
 -/
