@@ -1187,6 +1187,16 @@ end
 end proof
 
 export proof
+
+/--
+  Formal proof that there always exists an object of discourse,
+-/
+def let_there_be_light : (∅ : set $ formula L) ⊢ ∃'(#0 =' #0) :=
+begin
+  apply exI #0,
+  apply eqI,
+end
+
 /- Two variants of
   "All men are mortal.
    Socrates is a man.

@@ -68,7 +68,7 @@ prefix `∃!`:110 := unique_ex
 
 -- reducing terms helps with evaluating lifts and substituions
 -- however, pred_symbols and func_symbols will make more difficult:                        
-#reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄ ∈' 𝒫#1) ↑ 1 ＠ 1                   
+-- #reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄ ∈' 𝒫#1) ↑ 1 ＠ 1                   
 /-
 ((pred pred_symbols.elem).papp (func func_symbols.empty)).papp (func func_symbols.omega) ∧'
   ((pred pred_symbols.elem).papp
@@ -91,7 +91,7 @@ notation s ` '∈ `:100 t := papp (papp (pred pred_symbols.elem) s) t
 notation s ` '⊆ `:100 t := papp (papp (pred pred_symbols.subset) s) t
 
 -- after
-#reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄∈' 𝒫#1) ↑ 1 ＠ 1      
+-- #reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄∈' 𝒫#1) ↑ 1 ＠ 1      
 /-
   ('⌀ '∈ 'ω) ∧' '{ '⌀ , '⋃'{ '{ #4 , #4 } , '{ '{ #4 , #4 } , '{ #4 , #4 } } } } '∈ '𝒫#2
 -/
@@ -733,7 +733,8 @@ end
 
 
 /--
-  A formal proof that omega exists and is unique derived from the omega axiom and extensionality.
+  A formal proof that `ω` exists and is unique,
+  derived from the omega axiom and extensionality.
 
   Informally: `{omega_ax, extensionality} ⊢ ∃! w₀ : w₀ = { x | ∀ w : (w is inductive) →  x ∈ w }`.
 -/
@@ -751,7 +752,8 @@ begin
 end
 
 /--
-  A formal proof that omega is a subset of all inductive sets derived from the omega axiom.
+  A formal proof that `ω` is a subset of all inductive sets,
+  derived from the omega axiom.
 
   Informally: `{omega_ax} ⊢ ∀ w : (w is inductive) →  ω ⊆ w`.
 -/
@@ -780,7 +782,7 @@ begin
 end
 
 /--
-  Informally: `Γ ⊢ ∀ w : (w is inductive) →  ω ⊆ w from Γ`, provided `omega_ax ∈ Γ`.
+  Informally: `Γ ⊢ ∀ w : (w is inductive) →  ω ⊆ w`, provided `omega_ax ∈ Γ`.
 -/
 def omega_subset_all_inductive' {Γ} (h: omega_ax ∈ Γ) : 
   Γ ⊢  ∀' (#0 is_inductive →' (ω ⊆' #0))   :=
@@ -793,7 +795,7 @@ end
 /-- 
   A formal proof of `ω is inductive` derived from the omega axiom. 
 -/
-def omega_inductive :  {omega_ax} ⊢ ω is_inductive :=
+def omega_inductive : {omega_ax} ⊢ ω is_inductive :=
 begin
   apply andI,
   { -- ⊢ ⌀ ∈ ω

@@ -41,6 +41,7 @@ postfix ` is_inductive'`:100 := is_inductive
   := (∃'φ) ∧' (unique_in_var0 φ)
 prefix `∃!`:110 := unique_ex 
 
+/-
 -- some notation for the pretty printer to make debugging easier
 -- before
 #check  #1 ∈' #2                        -- #1 ∈' #2 : formula L
@@ -52,6 +53,7 @@ notation s ` '∈ `:100 t := papp (papp (pred pred_symb.elem) s) t
 #reduce #1 ∈' #2                        -- #1 ∈ #2
 #reduce (#0 ∈' #2 ∧' #1 ∈' #2) ↑ 1 ＠ 1 -- (#0 ∈ #3) ∧' #2 ∈ #3
 -- much better
+-/
 
 -- all things axiom scheme of separation
 namespace separation
@@ -170,7 +172,6 @@ begin subst h, exact H end
 -- def has_upper_bound (x: term L) : formula L  := ∃' ( #0 ∈' (x ↑  1 ＠ 0 ) ∧' ∀'( #0 ∈' #2 →' #0 '⊆ #1)) 
 -- -- #0 has a maximal element
 -- def has_maximal : formula L := ∃' ∀'( (#0 ∈' #2) →' (#0 '⊆ #1) →' (#0 =' #1)) 
-
 -- def zorn_lemma : formula L := ∀' (∀' ( (is_chain #1 →' has_upper_bound #1) →' (has_maximal)))
 
 def zfc_ax : set $ formula L := { extensionality, pair_ax, union_ax, power_ax, infinity_ax, 
@@ -180,15 +181,15 @@ def zfc_ax : set $ formula L := { extensionality, pair_ax, union_ax, power_ax, i
 
 lemma zfc_ax_set_of_sentences: ∀ x ∈ zfc_ax, (x is_sentence') :=
 begin
-    intros φ  h,
-    repeat{cases h,};
-    try {unfold sentence closed, refl, },
-    { cases h_h with n hn,
-      cases hn with h hh,
-      subst hh, apply separation.is_sentence, },
-    { cases h_h with n hn,
-      cases hn with h hh,
-      subst hh, apply replacement.is_sentence, },
+  intros φ  h,
+  repeat{cases h,};
+  try {unfold sentence closed, refl, },
+  { cases h_h with n hn,
+    cases hn with h hh,
+    subst hh, apply separation.is_sentence, },
+  { cases h_h with n hn,
+    cases hn with h hh,
+    subst hh, apply replacement.is_sentence, },
 end
 
 lemma lift_zfc_ax {m i} : (λ ϕ: formula L, ϕ ↑ m ＠ i) '' zfc_ax = zfc_ax 
@@ -210,15 +211,12 @@ lemma mem_zfc_ax (φ k) (φ_h: formula.closed (k+3) φ) : sentence φ φ_h ∈ z
 begin simp[-sentence, zfc_ax, mem_scheme], end
 end replacement
 
--- Lemma: There exists a set.
--- ⊢ ∃ x ( x = x )
-def let_there_be_light : (∅ : set $ formula L) ⊢ ∃'(#0 =' #0) :=
-begin
-  apply exI #0,
-  apply eqI,
-end
 
--- {pair, separation} ⊢ ∀ a ∀ b ∃ X ∀ x ( x ∈ X ↔ x = b ∨ x = a ) 
+/--
+  A formal proof that for all sets `b,a` there exists a set containing exactly `a` and `b`.
+
+  Informally: `zfc_ax ⊢ ∀b ∀a ∃A ∀x (x ∈ A ↔ x=a ∨ x=b)`
+-/
 def pairset_ex: zfc_ax ⊢ ∀' ∀' ∃' ∀' ( (#0 ∈' #1) ↔' (#0 =' #2) ∨' (#0 =' #3)) :=
 begin
   apply allI, -- given a
@@ -294,7 +292,7 @@ end
 /--
   Formal proof that an empty set exists.
 
-  Informally: `zfc_ax ⊢ ∃A (∀x ( x ∈ A ↔ ¬(x=x))) `
+  Informally: `zfc_ax ⊢ ∃A (∀x ( x ∈ A ↔ x≠x )) `
 -/
 def emptyset_ex : zfc_ax ⊢ ∃' (#0 is_empty'):=
 begin
@@ -332,7 +330,7 @@ end
 /--
   Formal proof that for all sets `a` there exists a set containing just `a`.
 
-  Informally: `zfc_ax ⊢ ∀a ∃A (∀x ( x ∈ A ↔ x = a)) `
+  Informally: `zfc_ax ⊢ ∀a ∃A (∀x ( x ∈ A ↔ x = a )) `
 -/
 def singleton_ex : zfc_ax ⊢ ∀' ∃' ∀' ( #0 ∈' #1 ↔' #0 =' #3) :=
 begin
@@ -457,7 +455,7 @@ begin
 end
 
 /--
-  Formal proof that for all sets `a, b` there exists a unique set `{a,b}` containing exactly `a` and `b`.
+  Formal proof that for all sets `b,a` the pair set `{a,b}` exists and is unique.
 
   Informally: `zfc_ax ⊢ ∀b ∀a ∃!A (∀x (x ∈ A ↔ x = a ∨ x = b))`
 -/
@@ -489,9 +487,9 @@ begin
 end
 
 /--
-  Formal proof that for all sets `a` there exists an unique set `{a}` containing just `a`.
+  Formal proof that for all sets `a` the singleton `{a}` exists and is unique.
 
-  Informally: `zfc_ax ⊢ ∀a ∃A (∀x ( x ∈ A ↔ x = a)) `
+  Informally: `zfc_ax ⊢ ∀a ∃!A (A = {a}) `
 -/
 def singleton_unique_ex : zfc_ax ⊢ ∀' ∃! ∀' ( #0 ∈' #1 ↔' #0 =' #3) :=
 begin
@@ -596,7 +594,7 @@ begin
             simp } } } } }
 end
 
-def separation_proof_scheme'  (φ) (k) (φ_h: closed (k+2) (φ ↑ 1 ＠ 1))
+def separation_proof_scheme' (φ) (k) (φ_h: closed (k+2) (φ ↑ 1 ＠ 1))
   {ψ : formula L} (ψ_h : ψ = alls k ∃' ∀'((#0 ∈' #1) ↔' (φ  ↑ 1 ＠ 1)))
   {Γ} (h : separation.sentence (φ ↑ 1 ＠ 1) φ_h ∈ Γ)
   (H: Γ ⊢ alls k ∃' ∀'( φ  ↑ 1 ＠ 1  →' (#0 ∈' #1))) 
@@ -606,16 +604,27 @@ begin
   apply separation_proof_scheme (φ ↑ 1 ＠ 1) k φ_h (by use φ) h H,
 end
 
+/--
+  Formal proof that for all sets `F` there exists a set 
+  containing exactly the elements of its elements.
+
+  Informally : `zfc_ax ⊢ ∀F ∃A ∀x (x ∈ A ↔ ∃y (x ∈ y ∧ y ∈ F))`
+-/
 def union_ex : zfc_ax ⊢ ∀' ∃' ∀' ( (#0 ∈' #1) ↔' ∃'(#1 ∈' #0 ∧' #0 ∈' #3) ):=
 begin
-  apply separation_proof_scheme' (∃'(#1 ∈' #0 ∧' #0 ∈' #2)) 1,
-  { refl, },
-  { apply separation.mem_zfc_ax, },
+  apply separation_proof_scheme' (∃'(#1 ∈' #0 ∧' #0 ∈' #2)) 1, -- enough to show one direction,
+  { refl, },                                                    
+  { apply separation.mem_zfc_ax, },                             -- which is an axiom
   { apply hypI,
     apply union_ax_mem_zfc_ax },
   { dsimp, refl, },
 end
 
+/--
+  Formal proof that for all sets `F` the union `⋃F` exists and is unique.
+
+  Informally : `zfc_ax ⊢ ∀F ∃!A (A = ⋃F)`
+-/
 def union_unique_ex : zfc_ax ⊢ ∀' ∃! ∀' ( (#0 ∈' #1) ↔' ∃'(#1 ∈' #0 ∧' #0 ∈' #3) ) := 
 begin
   apply allI,
@@ -628,16 +637,27 @@ begin
     simp[-extensionality, zfc_ax] },
 end
 
+/--
+  Formal proof that for all sets `y`  there exists a set 
+  containing exactly all its subsets exists.
+
+  Informally : `zfc_ax ⊢ ∀y ∃!A ∀x (x ∈ A  ↔ x ⊆ y)`
+-/
 def powerset_ex: zfc_ax ⊢ ∀' ∃' ∀' ((#0 ∈' #1) ↔' ( #0 '⊆ #2)) :=
 begin
-  apply separation_proof_scheme' (#0 '⊆ #1) 1,
+  apply separation_proof_scheme' (#0 '⊆ #1) 1,      -- enought to show oen direction
   { refl },
-  { apply separation.mem_zfc_ax, },
+  { apply separation.mem_zfc_ax, },                  -- which is an axiom
   { apply hypI,
     apply power_ax_mem_zfc_ax, },
   { dsimp, refl, },
 end
 
+/--
+  Formal proof that for all sets `y` the powerset `𝒫y` exists and is unique.
+
+  Informally : `zfc_ax ⊢ ∀y ∃!A (A = 𝒫y)`
+-/
 def powerset_unique_ex : zfc_ax ⊢ ∀' ∃! ∀' ((#0 ∈' #1) ↔' ( #0 '⊆ #2)) := 
 begin
   apply allI,
@@ -649,71 +669,103 @@ begin
     simp[-extensionality, zfc_ax] },
 end
 
+/--
+  Formal proof that for all sets `b, a` there exists a set containing exactly 
+  the elements of `a` and `b`.
+
+  Informally: `zfc_ax ⊢ ∀b ∀a ∃A ∀ x (x ∈ A  ↔ x ∈ a ∨ x ∈ b)`
+-/
 def binary_union_ex : zfc_ax ⊢ ∀' ∀' ∃' ∀' (#0 ∈' #1 ↔' #0 ∈' #2 ∨' #0 ∈' #3) :=
 begin
-  apply separation_proof_scheme' (#0 ∈' #1 ∨' #0 ∈' #2) 2,
+  apply separation_proof_scheme' (#0 ∈' #1 ∨' #0 ∈' #2) 2, -- only need to show one direction
   { refl, },
   { apply separation.mem_zfc_ax, },
-  { apply allI,
-    apply allI,
+  { apply allI, -- b
+    apply allI, -- a
     apply exE ∀'((#0 ∈' #1) ↔' (#0 =' #2) ∨' (#0 =' #3)),
-    { apply allE' _ #0,
+    { -- b a ⊢ ∃B (B = {a,b}) 
+      apply allE' _ #0,
       apply allE' _ #1,
       simp only [lift_zfc_ax],
       exact pairset_ex,
       simp, simp },
-    { apply exE  ∀'( (#0 ∈' #1) ↔' ∃'(#1 ∈' #0 ∧' #0 ∈' #3)),
-      { apply allE' _ #0,
+    { -- b a {a,b} ⊢ ∃A ∀x ( x ∈ a  ∨ x ∈ b → x ∈ A) 
+      apply exE  ∀'( (#0 ∈' #1) ↔' ∃'(#1 ∈' #0 ∧' #0 ∈' #3)),
+      { -- b a {a,b} ⊢ ∃B (B = ⋃{a,b})
+        apply allE' _ #0,
         simp only [lift_zfc_ax],
         apply weak1,
         exact union_ex,
         simp },
-      { apply exI #0,
-        apply allI,
-        apply impI,
+      { -- b a {a,b} ⋃{a,b} ⊢ ∃A ∀x ( x ∈ a  ∨ x ∈ b → x ∈ A) 
+        apply exI #0, -- let `A := ⋃{a,b}`
+        apply allI, -- x
+        apply impI, -- assume `x ∈ a ∨ x ∈ b`
         apply orE (#0 ∈' #3)  (#0 ∈' #4),
         { apply hypI1 },
-        { -- case : x ∈ b
+        { -- assume `x ∈ a`
+          -- b a {a,b} ⋃{a,b} ⊢ x ∈ ⋃{a,b}
           apply impE (∃'(#1 ∈' #0 ∧' #0 ∈' #3)),
-          { apply exI #3, 
+          { -- b a {a,b} ⋃{a,b} ⊢ ∃y (x ∈ y ∧  y ∈ {a,b})
+            apply exI #3,  -- put `y:= a`
             apply andI,
             { apply hypI1, },
-            { apply impE (#3 =' #3 ∨' #3 =' #4),
-              { apply orI₁, 
+            { -- b a {a,b} ⋃{a,b} ⊢ a ∈ {a,b}
+              apply impE (#3 =' #3 ∨' #3 =' #4),
+              { -- b a {a,b} ⋃{a,b} y ⊢ a = a ∨ a = b
+                apply orI₁, 
                 apply eqI, },
-              { apply iffE_l,
+              { -- b a {a,b} ⋃{a,b} ⊢ a = a ∨ a = b → a ∈ {a,b}
+                apply iffE_l,
                 apply allE' _ #3,
                 apply hypI,
+                -- meta
                 simp only [set.image_insert_eq],
                 right, right, right, left, refl,
                 simp } } },
-          { apply iffE_l,
+          { -- b a {a,b} ⋃{a,b} y ⊢ ∃(x ∈ y ∧  y ∈ {a,b}) → x ∈ ⋃{a,b}
+            apply iffE_l,
             apply allE_var0,
             apply hypI,
+            -- meta
             simp only [set.image_insert_eq],
             right, right, left, refl } },
-        { -- case : x ∈ a
+        { -- assume `x ∈ b`
+          -- b a {a,b} ⋃{a,b} ⊢ x ∈ ⋃{a,b}
           apply impE (∃'(#1 ∈' #0 ∧' #0 ∈' #3)),
-          { apply exI #4, 
+          { -- -- b a {a,b} ⋃{a,b} ⊢ ∃y (x ∈ y ∧  y ∈ {a,b})
+            apply exI #4, -- put `y:=b`
             apply andI,
             { apply hypI1, },
-            { apply impE (#4 =' #3 ∨' #4 =' #4),
-              { apply orI₂, 
+            { -- b a {a,b} ⋃{a,b} ⊢ b ∈ {a,b}
+              apply impE (#4 =' #3 ∨' #4 =' #4),
+              { -- b a {a,b} ⋃{a,b} y ⊢ b = a ∨ b = b
+                apply orI₂, 
                 apply eqI, },
-              { apply iffE_l,
+              { -- b a {a,b} ⋃{a,b} ⊢ b = a ∨ b = b → b ∈ {a,b}
+                apply iffE_l,
                 apply allE' _ #4,
                 apply hypI,
+                -- meta
                 simp only [set.image_insert_eq],
                 right, right, right, left, refl,
                 simp } } },
-          { apply iffE_l,
+          { -- b a {a,b} ⋃{a,b} y ⊢ ∃(x ∈ y ∧  y ∈ {a,b}) → x ∈ ⋃{a,b}
+            apply iffE_l,
             apply allE_var0,
             apply hypI,
+            -- meta
             simp only [set.image_insert_eq],
             right, right, left, refl } } } } },
   { dsimp, refl, },
 end
 
+
+/--
+  Formal proof that for all sets `b, a` the binary union `a ∪ b` exists and is unique.
+
+  Informally: `zfc_ax ⊢ ∀b ∀a ∃!A (A = a ∪ b)`
+-/
 def binary_union_unique_ex : zfc_ax ⊢ ∀' ∀' ∃! ∀' (#0 ∈' #1 ↔' #0 ∈' #2 ∨' #0 ∈' #3) := 
 begin
   apply allsI 2,
@@ -725,55 +777,79 @@ begin
     simp[-extensionality, zfc_ax] }
 end
 
+/--
+  Formal proof that for all sets `a` there exists a successor set containing exactly `a` and
+  the elements of `a` .
+
+  Informally: `zfc_ax ⊢ ∀a ∃A ∀x ( x ∈ A ↔ x ∈ a ∨ x = a )`
+-/
 def successor_ex : zfc_ax ⊢ ∀' ∃' (#0 is_successor_of' #1) :=
 begin
-  apply separation_proof_scheme' (#0 ∈' #1  ∨' (#0 =' #1)) 1,
+  apply separation_proof_scheme' (#0 ∈' #1  ∨' (#0 =' #1)) 1, -- only need to show one direction
   { refl, },
   { apply separation.mem_zfc_ax, },
-  { apply allI,
+  { apply allI, -- a
     apply exE ∀' (#0 ∈' #1 ↔' #0 =' #2),
-    { apply allE' _ #0,
+    { -- a ⊢ ∃ A  (A = {a})
+      apply allE' _ #0,
       simp only [lift_zfc_ax],
       exact singleton_ex, 
       dsimp, refl, },
-    apply exE ∀'(#0 ∈' #1 ↔' #0 ∈' #3 ∨' #0 ∈' #2),
-    { apply allE' _ #1,
-      apply allE' _ #0,
-      simp only [lift_zfc_ax],
-      apply weak1,
-      exact binary_union_ex,
-      simp, dsimp, refl },
-    apply exI #0,
-    apply allI,
-    apply impI,
-    apply orE (#0 ∈' #3) (#0 =' #3),
-    { apply hypI1, },
-    { -- case x ∈ a
-      apply impE (#0 ∈' #3 ∨' #0 ∈' #2),
-      { apply orI₁, apply hypI1,},
-      { apply iffE_l, 
-        apply allE_var0,
-        apply hypI,
-        simp only [set.image_insert_eq],
-        right, right, left, refl } },
-    { -- case x = a
-      apply impE (#0 ∈' #3 ∨' #0 ∈' #2),
-      { apply orI₂, 
-        apply impE_insert,
-        apply iffE_l,
-        apply allE_var0,
-        apply hypI,
-        simp only [set.image_insert_eq],
-        right, right, left, refl },
-      { 
-        apply iffE_l,
-        apply allE_var0,
-        apply hypI,
-        simp only [set.image_insert_eq],
-        right, right, left, refl } } },
+    { -- a {a} ⊢ ∃ S ∀ x ( x ∈ a ∨ x = {a} → x ∈ S)
+      apply exE ∀'(#0 ∈' #1 ↔' #0 ∈' #3 ∨' #0 ∈' #2),
+      { -- a {a} ⊢ ∃ B ( B = a ∪ {a} )
+        apply allE' _ #1,
+        apply allE' _ #0,
+        simp only [lift_zfc_ax],
+        apply weak1,
+        exact binary_union_ex,
+        simp, dsimp, refl },
+      { -- a {a} (a ∪ {a}) ⊢ ∃ S ∀ x ( x ∈ a ∨ x = {a} → x ∈ S)
+        apply exI #0, -- put `S = a ∪ {a}`
+        apply allI,   -- x
+        apply impI,   -- assume `x ∈ a ∨ x = a`
+        apply orE (#0 ∈' #3) (#0 =' #3),
+        { apply hypI1, },
+        { -- case `x ∈ a`
+          -- a {a} (a ∪ {a}) x ⊢ x ∈ a ∪ {a}
+          apply impE (#0 ∈' #3 ∨' #0 ∈' #2),
+          { -- a {a} (a ∪ {a}) x ⊢  x ∈ a ∨ x ∈ {a}
+            apply orI₁, 
+            apply hypI1 },
+          { -- a {a} (a ∪ {a}) x ⊢ x ∈ a ∨ x ∈ {a} → x ∈ a ∪ {a}
+            apply iffE_l, 
+            apply allE_var0,
+            apply hypI,
+            -- meta
+            simp only [set.image_insert_eq],
+            right, right, left, refl } },
+        { -- case `x = a`
+          -- a {a} (a ∪ {a}) x ⊢ x ∈ a ∪ {a} 
+          apply impE (#0 ∈' #3 ∨' #0 ∈' #2),
+          { -- a {a} (a ∪ {a}) x ⊢  x ∈ a ∨ x ∈ {a}
+            apply orI₂, 
+            apply impE_insert,
+            apply iffE_l,
+            apply allE_var0,
+            apply hypI,
+            -- meta
+            simp only [set.image_insert_eq],
+            right, right, left, refl },
+          { -- a {a} (a ∪ {a}) x ⊢  x ∈ a ∨ x ∈ {a} → x ∈ a ∪ {a}
+            apply iffE_l,
+            apply allE_var0,
+            apply hypI,
+            -- meta
+            simp only [set.image_insert_eq],
+            right, right, left, refl } } } } },
   { dsimp, refl, },
 end
 
+/--
+  Formal proof that for all sets `a` the successor set `S(a)` exists and is unique.
+
+  Informally: `zfc_ax ⊢ ∀a ∃!A ( A = S(a) )`
+-/
 def successor_unique_ex : zfc_ax ⊢ ∀' ∃! (#0 is_successor_of' #1) := 
 begin
   apply allsI 1,
@@ -785,54 +861,68 @@ begin
     simp[-extensionality, zfc_ax] },
 end
 
+/--
+  Formal proof that there exists a set containg exactly the elements common to all inductive sets.
+
+  Informally: `zfc_ax ⊢  ∃A ∀x (x ∈ A ↔ ∀ w (w is inductive → x ∈ w)`
+-/
 def omega_ex : zfc_ax ⊢ ∃' ∀' ( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) :=
 begin
-  apply separation_proof_scheme' (∀' (#0 is_inductive' →' #1 ∈' #0)) 0,
+  apply separation_proof_scheme' (∀' (#0 is_inductive' →' #1 ∈' #0)) 0, -- enough to show one direction
   { refl, },
   { apply separation.mem_zfc_ax, },
-  { apply exE (#0 is_inductive'), -- let x be an inductive set 
-  { apply hypI, 
-    exact infinity_ax_mem_zfc_ax }, -- this exists because of the axiom of infinity
-  { apply exE ∀'(#0 ∈' #1 ↔' #0 ∈' #2  ∧'  ∀' (#0 is_inductive' →' #1 ∈' #0)),
-    { apply allE_var0,
+  { apply exE (#0 is_inductive'),
+    { -- ⊢ ∃A ( A is inductive)
       apply hypI,
-      simp only [lift_zfc_ax],
-      right,
-      apply separation.mem_zfc_ax (∀'(#0 is_inductive' →' #1 ∈' #0)) 0,
-      dsimp, refl },
-    -- stack: #1 := w₀ (infinite/inductive set)
-    --        #0 := ω  (elements of #1 contained in all inductive)
-    --        ⊢  ∀ x ( x ∈ ω ↔ (∀ w ( w inductive → x ∈ w)))
-    { apply exI #0,
-      apply allI,
-      -- stack: #2 := w₀ (infinite/inductive set)
-      --        #1 := ω  (elements of #1 contained in all inductive)
-      --        #0 := x
-      --        ⊢ (∀ w ( w inductive → x ∈ w))) → x ∈ ω
-      apply impI,
-      -- new info: (∀ w ( w inductive → x ∈ w)))
-      apply iffE₁ (#0 ∈' #2 ∧' ∀' (#0 is_inductive' →' #1 ∈' #0)),
-      { apply andI,
-        { apply impE (#2 is_inductive'),
-        -- ( ( ∀' (#0 is_empty' →' (#0 ∈' #3)) ) ∧'      -- 0 ∈ x
-        --                ( ∀'( #0 ∈' #3 →' ( ∀' ( ( #0 is_successor_of' #1) →' (#0 ∈' #4)))))),
-          { apply hypI,
-            simp only [set.image_insert_eq],
-            right, right, left,
-            simp[is_inductive, is_empty, is_successor_of] },
-          { 
-            apply allE' _ #2,
-            apply hypI,
-            left, refl, dsimp, refl } },
-        { apply hypI1, } },
-      {
+      exact infinity_ax_mem_zfc_ax }, -- this exists because of the axiom of infinity
+    { -- A ⊢ ∃ω ∀x (∀w (w is inductive → w ∈ ω)) → x ∈ ω)
+      apply exE ∀'(#0 ∈' #1 ↔' #0 ∈' #2  ∧'  ∀' (#0 is_inductive' →' #1 ∈' #0)),
+      { -- A ⊢ ∃B ∀x ( x ∈ B ↔ (x ∈ A) ∧ ∀w (w is inductive → x ∈ w) 
         apply allE_var0,
         apply hypI,
-        simp only [set.image_insert_eq],
-        right, left, refl } } } },
-  { dsimp, refl }
+        -- meta
+        simp only [lift_zfc_ax],
+        right,
+        apply separation.mem_zfc_ax (∀'(#0 is_inductive' →' #1 ∈' #0)) 0,
+        dsimp, refl },
+      { -- B with `∀x ( x ∈ B ↔ ((x ∈ A) ∧ ∀w (w is inductive → x ∈ w)))` 
+        -- A B ⊢ ∃ω ∀x  (∀w (w is inductive → x ∈ ω)) → x ∈ ω)
+        apply exI #0, -- let `ω := B`
+        apply allI,
+        apply impI,   -- assume `x` with `(∀w (w is inductive → x ∈ ω))` 
+        apply iffE₁ (#0 ∈' #2 ∧' ∀' (#0 is_inductive' →' #1 ∈' #0)),
+        { -- A B x ⊢ (x ∈ A ∧ ∀w(w is inductive → x ∈ w)
+          apply andI,
+          { -- A B x ⊢ x ∈ A 
+            apply impE (#2 is_inductive'),
+            { -- A B x ⊢ A is inductive 
+              apply hypI,
+              -- meta
+              simp only [set.image_insert_eq],
+              right, right, left,
+              simp[is_inductive, is_empty, is_successor_of] },
+            { -- A B x ⊢  A is inductive → x ∈ A 
+              apply allE' _ #2,
+              apply hypI,
+              -- meta
+              left, refl, dsimp, refl } },
+          { -- A B x ⊢ ∀w(w is inductive → x ∈ w)
+            apply hypI1, } },
+        { -- A B x ⊢ x ∈ B ↔ (x ∈ A ∧ ∀w(w is inductive → x ∈ w))
+          apply allE_var0,
+          apply hypI,
+          -- meta
+          simp only [set.image_insert_eq],
+          right, left, refl } } } },
+  { -- meta
+    dsimp, refl }
 end 
 
+/--
+  Formal proof that `ω` exists and is unique. 
+
+  Informally: `zfc_ax ⊢  ∃!A (A = ω)`
+-/
 def omega_unique_ex : zfc_ax ⊢ ∃! ∀' ( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) :=
 begin
   apply andI,
@@ -844,7 +934,7 @@ end
 /--
   A formal proof that `ω` is a subset of all inductive sets.
 
-  Informally : `zfc_ax ⊢ ∀ ω (ω = {x | ∀ w ( w is inductive → x ∈ w)} → ∀ w (w is inductive → ω ⊆ w)`
+  Informally : `zfc_ax ⊢ ∀ A (A = ω → ∀ w (w is inductive → A ⊆ w))`
 -/
 def omega_subset_all_inductive : 
   zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' ∀' (#0 is_inductive' →' #1 '⊆ #0) )  :=
@@ -867,11 +957,12 @@ begin
     { dsimp, refl, } },
 end
 /--
-  A formal proof that `ω` is an inductive set derived from the axioms of ZFC.
+  A formal proof that `ω` is inductive.
 
-  Informally : `zfc_ax ⊢ ∀ ω (ω = {x | ∀ w ( w is inductive → x ∈ w)} → ω is inductive)`
+  Informally : `zfc_ax ⊢ ∀ A (A = ω → A is inductive)`
 -/
-def omega_inductive : zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' (#0 is_inductive')) :=
+def omega_inductive : zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' 
+  ∀' (#0 is_inductive' →' #1 ∈' #0)) →' (#0 is_inductive')) :=
 begin
   apply allI, -- ω
   apply impI, -- assume `ω = { x | ∀ w ( w is inductive → x ∈ w) }`
@@ -968,7 +1059,7 @@ end
   A formal proof that `ω` is the smallest inductive set.
 
   Informally : 
-  `zfc_ax ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ((ω is inductive) ∧ ∀ w (w is inductive → ω ⊆ w))`
+  `zfc_ax ⊢ ∀ X ( A = ω → (A is inductive ∧ ∀ w (w is inductive → X ⊆ w))`
 -/
 def omega_smallest_inductive : 
   zfc_ax ⊢ ∀' ( ∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) 
