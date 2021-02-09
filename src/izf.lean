@@ -118,7 +118,7 @@ end
 lemma is_sentence {k : ℕ} {φ  : fol.formula L} (H: fol.formula.closed (k+2) φ) :
   (sentence φ H) is_sentence' := begin exact closure_is_sentence (closed H) end
 
-lemma mem_of {Γ:set $ fol.formula L} (φ) (k) (φ_h: formula.closed (k+2) φ) 
+lemma mem {Γ:set $ fol.formula L} (φ) (k) (φ_h: formula.closed (k+2) φ) 
   {ψ} (h : ψ = sentence φ φ_h) (H: (sentence φ φ_h) ∈ Γ) : ψ ∈ Γ :=
 begin subst h, exact H, end 
 
@@ -165,7 +165,7 @@ def sentence  (φ : fol.formula L) {k : ℕ} (H: formula.closed (k+3) φ) : fol.
 lemma is_sentence  {φ : fol.formula L} {k : ℕ} (H: fol.formula.closed (k+3) φ) :
   (sentence φ H) is_sentence' := begin exact closure_is_sentence (closed H) end
 
-lemma mem_of {Γ:set $ fol.formula L} {ψ} {k} (φ) (φ_h: formula.closed (k+3) φ) 
+lemma mem {Γ:set $ fol.formula L} {ψ} {k} (φ) (φ_h: formula.closed (k+3) φ) 
   (h : ψ = sentence φ φ_h) (H: (sentence φ φ_h) ∈ Γ) : ψ ∈ Γ :=
 begin subst h, exact H end 
 
@@ -362,7 +362,7 @@ begin
       rw [alls,alls],
       apply hypI,
       -- meta
-      apply separation.mem_of φ k φ_h₁ (rfl),
+      apply separation.mem φ k φ_h₁ (rfl),
       assumption, },
     { -- A B ⊢ ∃ B ∀ x (x ∈ B ↔ φ ) 
       apply exI #0,
@@ -855,7 +855,7 @@ end
 /--
   A formal proof that `ω` is the smallest inductive set derived from the axioms of IZF.
 
-  Informally : `{izf_ax} ⊢ (ω is inductive) ∧ ∀ w :(w is inductive) → ω ⊆ w)`
+  Informally : `izf_ax ⊢ (ω is inductive) ∧ ∀ w ((w is inductive) → ω ⊆ w)`
 -/
 def omega_smallest_inductive : izf_ax ⊢ (ω is_inductive) ∧' ∀'((#0 is_inductive) →' ω ⊆' #0) :=
 begin

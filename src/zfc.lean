@@ -173,7 +173,8 @@ begin subst h, exact H end
 
 -- def zorn_lemma : formula L := ∀' (∀' ( (is_chain #1 →' has_upper_bound #1) →' (has_maximal)))
 
-def zfc_ax : set $ formula L := { extensionality, pair_ax, union_ax, power_ax, infinity_ax, regularity, axiom_of_choice} 
+def zfc_ax : set $ formula L := { extensionality, pair_ax, union_ax, power_ax, infinity_ax, 
+                                  regularity, axiom_of_choice} 
                                     ∪ separation.scheme
                                     ∪ replacement.scheme
 
@@ -290,9 +291,11 @@ begin
             right, right, apply set.mem_insert } } } } },
 end
 
+/--
+  Formal proof that an empty set exists.
 
--- Lemma : There exists an empty set.
--- zfc ⊢ ∃X ∀x ( x ∈ X ↔ ¬ (x = x) ) 
+  Informally: `zfc_ax ⊢ ∃A (∀x ( x ∈ A ↔ ¬(x=x))) `
+-/
 def emptyset_ex : zfc_ax ⊢ ∃' (#0 is_empty'):=
 begin
   -- consinder the set { x | x ∈ A ∧ ¬'(#0 =' #0 ) }
@@ -326,13 +329,16 @@ begin
       left, refl } },
 end
 
--- Lemma: For all a there exists a set {a}.
--- zfc ⊢ ∀ x ∃X (x ∈ X ↔ x = a) 
+/--
+  Formal proof that for all sets `a` there exists a set containing just `a`.
+
+  Informally: `zfc_ax ⊢ ∀a ∃A (∀x ( x ∈ A ↔ x = a)) `
+-/
 def singleton_ex : zfc_ax ⊢ ∀' ∃' ∀' ( #0 ∈' #1 ↔' #0 =' #3) :=
 begin
   apply allI, --given a
-  apply exE ∀' ( #0 ∈' #1 ↔' #0 =' #3 ∨' #0 =' #3), -- the set {a,a} exists
-  { -- show existence 
+  apply exE ∀' ( #0 ∈' #1 ↔' #0 =' #3 ∨' #0 =' #3), -- have the set {a,a}
+  { -- a ⊢ ∃A ( A = {a,a}) 
     apply allE' _ #1,
     apply allE' _ #1,
     rw lift_zfc_ax,
@@ -340,14 +346,14 @@ begin
     -- meta
     dsimp, refl,
     dsimp, refl },
-  { -- ∃ X ∀x (x ∈ X ↔ x= a)
-    apply exI #0, -- put X:={a,a}
+  { -- a ⊢ ∃ A ∀x (x ∈ A ↔ x = a)
+    apply exI #0, -- put `A := {a,a}`
     apply allI,   -- given x
     apply andI,
-    { -- ⊢ x ∈ {a,a} → x = a
-      apply impI,
+    { -- a A x ⊢ x ∈ {a,a} → x = a
+      apply impI, -- assume `x ∈ {a,a}`
       apply orE (#0 =' #3) (#0 =' #3), -- suffices to show (x = a) ∨ ( x = a)
-      { -- ⊢ x = a ∨ x = a
+      { -- a A x ⊢ x = a ∨ x = a
         apply impE_insert,
         apply iffE_r,
         apply allE_var0,
@@ -355,17 +361,19 @@ begin
         -- meta
         simp only [set.image_insert_eq], 
         left, refl },
-      { -- ⊢ x = a
+      { -- assume `x = a`
+        -- a A x⊢ x = a
         apply hypI1 },
-      { -- ⊢ x = a
+      { -- assume `x = a`
+        -- a A x ⊢ x = a
         apply hypI1 } },
-    { -- ⊢ x = a → x ∈ {a,a}
-      apply impI,
+    { -- a A x ⊢ x = a → x ∈ {a,a}
+      apply impI, -- assume `x = a`
       apply impE ((#0 =' #3) ∨' (#0 =' #3)),
-      { -- ⊢ x=a ∨ x=a
+      { -- a A ⊢ x=a ∨ x=a
         apply orI₁,
         apply hypI1 },
-      { -- ⊢ x=a ∨ x=a → x ∈ {a,a}
+      { -- a A x ⊢ x=a ∨ x=a → x ∈ {a,a}
         apply iffE_l,
         apply allE_var0,
         apply hypI,
@@ -374,29 +382,39 @@ begin
         right, left, refl } } }
 end
 
+/--
+  TODO : think of a good term to refer to the free variable "places"(?)
+  Proof scheme showing uniqueness of a set X = { x | φ(x) } defined by a formula  φ,
+  provided φ does not reference X.
+
+  Uses: extensionality
+-/
 def extensionality_implies_uniqueness (φ : formula L)
-  : {extensionality} ⊢ unique_in_var0 ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1)) :=
+  : {extensionality} ⊢ unique_in_var0  ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1)) :=
 begin
-  apply allI, -- y_1
-  apply allI, -- y_0
-  apply impI,
-  apply impE (∀' (#0 ∈' #1 ↔' #0 ∈' #2)),
-  { apply allI, -- x
-    -- stack a b y_1 y_0 x
+  apply allI, -- y₁
+  apply allI, -- y₀
+  apply impI, -- assume `∀ x ( x ∈ y₀ ↔ φ(x, y₀)) ∧ ∀ x (x ∈ y₁ ↔ φ(x,y₁))`
+  apply impE (∀' (#0 ∈' #1 ↔' #0 ∈' #2)), 
+  { -- y₁ y₀ ⊢ (∀' (#0 ∈' #1 ↔' #0 ∈' #2))
+    apply allI, -- x
     apply iffI_trans (φ ↑ 2 ＠  1), 
-    { apply allE_var0, 
+    { -- y₁ y₀ x ⊢ x ∈ y₀ ↔ φ (x, y₀)
+      apply allE_var0, 
       apply andE₁ _ , 
       apply hypI, 
       -- meta argument
       simp [set.image_insert_eq],
       simp [subst_var0_for_0_lift_by_1, lift_lift_merge φ 1] },
-    { apply iffI_symm, 
+    { -- y₁ y₀ x ⊢ φ (x, y₁) ↔ x ∈ y₁
+      apply iffI_symm, 
       apply allE_var0, 
       apply andE₂ _ , 
       apply hypI,
       -- meta argument
       simp [set.image_insert_eq] } },
-  { apply allE_var0,
+  { -- y₁ y₀ ⊢ ∀ x (x ∈ y₀ ↔ x ∈ y₁) → y₀ = y₁
+    apply allE_var0,
     apply allE' _ #1,
     apply weak1,
     apply hypI, 
@@ -404,7 +422,14 @@ begin
     simp,
     simp, },
 end
+/--
+  A proof scheme showing uniqueness of sets x₀ = { x | ψ(x) } defined by a formula φ,
+  provided ψ does not reference x₀ (i.e. the free variable at place 0).
 
+  In technical terms this means that `p` is of the form `ψ = φ ↑ 1 ＠ 1`. 
+
+  Uses:  extensionality
+-/
 def extensionality_implies_uniqueness' {Γ} (φ) {ψ} (h: ψ = ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1) ) ) (H: extensionality ∈ Γ)  
   : Γ ⊢ unique_in_var0 ψ :=
 begin
@@ -413,6 +438,14 @@ begin
   exact H,
 end
 
+/--
+  Proof scheme showing uniqueness of x₁ = { x | φ(x, x₂, ... ) } defined by a formula φ
+  for all x₁ ... xₙ, provided φ does not reference x₁.
+
+  Note: The formula shown is not necesserily a sentence.
+
+  Uses: extensionality
+-/
 def extensionality_implies_uniqueness_alls  (n)  (φ : formula L)
   : {extensionality} ⊢ alls n (unique_in_var0 ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1))) :=
 begin
@@ -423,20 +456,30 @@ begin
   exact ⟨ set.mem_singleton _ , rfl ⟩,
 end
 
+/--
+  Formal proof that for all sets `a, b` there exists a unique set `{a,b}` containing exactly `a` and `b`.
+
+  Informally: `zfc_ax ⊢ ∀b ∀a ∃!A (∀x (x ∈ A ↔ x = a ∨ x = b))`
+-/
 def pairset_unique_ex : zfc_ax ⊢ (∀' ∀' ∃! ∀' ((#0 ∈' #1) ↔' (#0 =' #2) ∨' (#0 =' #3))) := 
 begin
-  apply allI,
-  apply allI,
+  apply allI, -- b
+  apply allI, -- a
   simp only [lift_zfc_ax],
   apply andI,
-  { apply allE' _ #0,
+  { -- b a ⊢ ∃A (∀x (x ∈ A ↔ x = a ∨ x = b)) 
+    apply allE' _ #0,
     apply allE' _ #1,
     exact pairset_ex,
     simp, simp },
   { apply extensionality_implies_uniqueness' (#0 =' #1 ∨' #0 =' #2) (rfl),
     simp[-extensionality, zfc_ax] },
 end
+/--
+  Formal proof that there exists an unique empty set.
 
+  Informally: `zfc_ax ⊢ ∃! A (∀x ( x ∈ A ↔ ¬(x=x))) `
+-/
 def emptyset_unique_ex : zfc_ax ⊢ ∃! (#0 is_empty') := 
 begin
   apply andI,
@@ -445,6 +488,11 @@ begin
     simp[-extensionality, zfc_ax] },
 end
 
+/--
+  Formal proof that for all sets `a` there exists an unique set `{a}` containing just `a`.
+
+  Informally: `zfc_ax ⊢ ∀a ∃A (∀x ( x ∈ A ↔ x = a)) `
+-/
 def singleton_unique_ex : zfc_ax ⊢ ∀' ∃! ∀' ( #0 ∈' #1 ↔' #0 =' #3) :=
 begin
   apply allsI 1,
@@ -456,6 +504,15 @@ begin
     simp[-extensionality, zfc_ax] },
 end
 
+
+/--
+  Proof scheme showing uniqueness of x₁ = { x | φ(x, x₂, ... ) } defined by a formula φ
+  for all x₁ ... xₙ, provided φ does not reference x₁.
+
+  Note: The formula shown is not necesserily a sentence.
+
+  Uses: separation for the formula φ with (k+2) free variables.
+-/
 def separation_proof_scheme 
   (φ k) (φ_h₁: closed (k+2) φ)         -- given a formula φ(x_1,...,x_{k+1})
   (φ_h₂ : ∃ ϕ : formula L , φ = ϕ ↑ 1 ＠ 1) -- such that the x₂ is not among its free variables
@@ -464,22 +521,27 @@ def separation_proof_scheme
   : Γ ⊢ alls k (∃' ∀'((#0 ∈' #1) ↔' φ)) :=
 begin
   apply allsI,
-  apply exE ∀'( φ →' (#0 ∈' #1)),
-  { apply allsE',
+  apply exE ∀'( φ →' (#0 ∈' #1)), -- A with ∀ x (φ → x ∈ A) 
+  { -- xₖ ... x₁ ⊢ ∃ A ∀x (φ → x ∈ A)
+    apply allsE',
     exact H },
-  { apply exE (∀'( (#0 ∈' #1) ↔' ( (#0 ∈' #2) ∧' (φ   ↑ 1 ＠  1) ))),
-    { apply weak1, 
+  { -- xₖ ... x₁ A ⊢ ∃ B ∀ x (x ∈ B ↔ φ )
+    apply exE (∀'( (#0 ∈' #1) ↔' ( (#0 ∈' #2) ∧' (φ ↑ 1 ＠ 1 ) ))), -- B with ∀ x (x ∈ B ↔ x ∈ A ∧ φ )
+    { -- xₖ ... x₁ A ⊢ ∃ B ∀ x (x ∈ B ↔ x ∈ A ∧ φ )
+      apply weak1, 
       apply allsE' 1,
       apply allsE' k,
       rw [alls,alls],
       apply hypI,
+      -- meta
       apply separation.mem φ k φ_h₁ (rfl),
       assumption, },
-    { apply exI #0,
-      apply allI,
+    { -- A B ⊢ ∃ B ∀ x (x ∈ B ↔ φ ) 
+      apply exI #0,
+      apply allI, -- x
       apply andI,
-      { 
-        apply impI,
+      { -- A B x ⊢ x ∈ B → φ
+        apply impI, -- assume `x ∈ B`
         apply andE₂ (#0 ∈' #2),
         apply impE_insert,
         apply iffE_r,
@@ -493,31 +555,39 @@ begin
         rw [subst_var0_lift_by_1, subst_var0_lift_by_1],
         rw [←lift_lift ψ _ _ (le_refl 1)], 
         refl },
-      { apply impI,
+      { --  A B x ⊢ φ → x ∈ B
+        apply impI, -- assume `φ`
         apply impE (#0 ∈' #2),
-        { apply impE (φ ↑ 1 ＠ 1),
-          {
+        { --  A B x ⊢ x ∈ A
+          apply impE (φ ↑ 1 ＠ 1),
+          { -- A B x ⊢ φ 
             apply hypI,
             left,
             cases φ_h₂ with ψ ψ_h,
             subst ψ_h,
             rw [subst_var0_lift_by_1, ←lift_lift ψ _ _ (le_rfl)] },
-          {
+          { -- A B x ⊢ φ → x ∈ A
             apply allE_var0, 
             apply hypI,
             -- meta
             simp only [set.image_insert_eq],
             right, right, left, refl } },
-        { apply impI,
+        { --  A B x ⊢ x ∈ A → x ∈ B
+          apply impI, -- assume `x ∈ A` 
           apply impE (#0 ∈' #2 ∧' (φ ↑ 1 ＠ 1)),
-          { apply andI, 
-            { apply hypI1 },
-            { apply hypI,
+          { -- A B x ⊢ x ∈ A ∧ φ 
+            apply andI, 
+            { -- A B x ⊢ x ∈ A
+              apply hypI1 },
+            { -- A B x ⊢ φ 
+              apply hypI,
+              -- meta
               right, left,
               cases φ_h₂ with ψ ψ_h,
               subst ψ_h,
               rw [subst_var0_lift_by_1, lift_lift ψ _ _ (le_rfl)] } },
-          { apply iffE_l, 
+          { -- A B x ⊢  x ∈ A ∧ φ → x ∈ B
+            apply iffE_l, 
             apply allE_var0, 
             apply hypI,
             --meta
@@ -774,7 +844,7 @@ end
 /--
   A formal proof that `ω` is a subset of all inductive sets.
 
-  Informally : `{zfc_ax} ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ∀ w ( w is inductive → ω ⊆ w)`
+  Informally : `zfc_ax ⊢ ∀ ω (ω = {x | ∀ w ( w is inductive → x ∈ w)} → ∀ w (w is inductive → ω ⊆ w)`
 -/
 def omega_subset_all_inductive : 
   zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' ∀' (#0 is_inductive' →' #1 '⊆ #0) )  :=
@@ -799,7 +869,7 @@ end
 /--
   A formal proof that `ω` is an inductive set derived from the axioms of ZFC.
 
-  Informally : `{zfc_ax} ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ω is inductive)`
+  Informally : `zfc_ax ⊢ ∀ ω (ω = {x | ∀ w ( w is inductive → x ∈ w)} → ω is inductive)`
 -/
 def omega_inductive : zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' (#0 is_inductive')) :=
 begin
@@ -898,7 +968,7 @@ end
   A formal proof that `ω` is the smallest inductive set.
 
   Informally : 
-  `{zfc_ax} ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ( (ω is inductive) ∧ ∀ w (w is inductive → ω ⊆ w))`
+  `zfc_ax ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ((ω is inductive) ∧ ∀ w (w is inductive → ω ⊆ w))`
 -/
 def omega_smallest_inductive : 
   zfc_ax ⊢ ∀' ( ∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) 
