@@ -855,7 +855,7 @@ end
 /--
   A formal proof that `ω` is the smallest inductive set derived from the axioms of IZF.
 
-  Informally : `{zfc_ax} ⊢ (ω is inductive) ∧ ∀ w :(w is inductive) → ω ⊆ w)`
+  Informally : `{izf_ax} ⊢ (ω is inductive) ∧ ∀ w :(w is inductive) → ω ⊆ w)`
 -/
 def omega_smallest_inductive : izf_ax ⊢ (ω is_inductive) ∧' ∀'((#0 is_inductive) →' ω ⊆' #0) :=
 begin

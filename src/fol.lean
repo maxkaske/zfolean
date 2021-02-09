@@ -1,7 +1,7 @@
 import data.set
 import tactic.linarith
 
--- set_option trace.simp_lemmas true
+-- use with `simp only with tls`
 mk_simp_attribute tls
 "Collection of definitions and lemmas for simplifying combinations of lifts and substitutions we would consider trivial."
 
@@ -20,14 +20,13 @@ def trivial_lang : language :=
 { functions := empty, predicates := empty}
 
 variable (L : language.{u})
-  -- * for each natural numer `x` the expression `var x` is a preterm of arity 0,
-  -- * for each function symbol `f` of `L` with arity `a` the expression `func f` is a preterm of arity `a`,
-  -- * for each pretermterm `t` of arity `a+1` and preterm `s` arity 0 the expression `fapp t s` is a preterm of arity `a`.
+ 
 /--
-  `preterm L a` is first-order preterm of `L` with arity `a` in the language `L` is inductively defined as follows.
-  A preterm of arity 0 is a well-defined term of `L`.
+  `preterm L a` is partially applied* first-order term of `L`, representing variabes as De Bruijn indices.
 
-  This representation 
+  * For `a=0` this is a well-formed term.
+  * For `a≠0` this is a partially applied function, requiring `a` further term applications to become
+    a well formed term.
 -/
 inductive preterm : ℕ → Type u
 | var  ( index : ℕ ) : preterm 0
@@ -42,6 +41,7 @@ variable {L}
 namespace term
 /--
   `lift t m i` increases the index of each `i`-free variable in `t` by `m`.
+
   * a variable is `i`-free if its De Bruijn index is greater than or equal to `i`.
   * Notation:  `t ↑ m ＠ i`
   * Note: We read this as "lift term `t` by `m` at `i`", which then informs the naming of later lemmas and our notation.
@@ -90,7 +90,8 @@ namespace term
 -- collected through https://github.com/coq-community/dblib/blob/master/src/DeBruijn.v
 -- and www21.in.tum.de/~berghofe/papers/LFMTP06.pdf
 
-lemma lift_lift: ∀ {a} ( t : preterm L a ) (m) {i} (n) {j} (H : j ≤ i), (t ↑ m ＠ i) ↑ n ＠ j = (t ↑ n ＠ j) ↑ m ＠ (i+n) 
+lemma lift_lift: ∀ {a} ( t : preterm L a ) (m) {i} (n) {j} (H : j ≤ i), 
+  (t ↑ m ＠ i) ↑ n ＠ j = (t ↑ n ＠ j) ↑ m ＠ (i+n) 
 | _ #x          m i n j H   := 
   begin by_cases h₀ : i ≤ x,
     { have h₁ : j ≤ x := le_trans H h₀, 
@@ -129,7 +130,7 @@ lemma lift_by_succ {a} ( t : preterm L a) {m i} : t ↑ (m+1) ＠ i  = ( t ↑ 1
 
 
 /-- 
-  `subst t s k` subsitutes each occurences of `#k` in `t` for `s ↑₀ k` and 
+  `subst t s k` subsitutes each occurences of `#k` in `t` for `s ↑ k ＠ 0` and 
   reduces the index of all variables above `k` by `1`.
 -/
 def subst: ∀{a}, preterm L a → term L → ℕ → preterm L a
@@ -145,6 +146,7 @@ notation t `[`:max s ` ⁄ `:95 n `]`:0 := term.subst t s n
 #reduce #5[#2 ⁄ 1]
 
 namespace term
+
 -- lemmas for the simplifier
 @[simp, tls] lemma subst_fapp {a} (t₁ : preterm L (a+1)) (t₂ s : preterm L 0) (k : ℕ ) : 
   (fapp t₁ t₂) [s ⁄ k] = fapp (t₁ [s ⁄ k]) (t₂ [s ⁄ k]) := by refl
@@ -190,11 +192,8 @@ lemma lift_subst : ∀ {a}  (t : preterm L a) (s: term L) (m) {i} (k) ( H: i ≤
 | _ (func f)   _ _ _ _ _ := by refl
 | _ (fapp f t) _ _ _ _ _ := by simp* 
 
-
-
-
 lemma subst_lift: ∀  {a}  (t : preterm L a) (s: term L) {m i k : ℕ} (H: i ≤ k) (H' : k ≤ i + m),
-    (t ↑ (m+1) ＠ i) [s ⁄ k] = t ↑ m ＠ i --subst ( lift t (m+1) i) s k = lift t m i   
+    (t ↑ (m+1) ＠ i) [s ⁄ k] = t ↑ m ＠ i 
 | _ #x s m i k H H' := 
   begin by_cases h: i ≤ x,
     { have h₁ : k < x + (m + 1), from lt_succ_of_le (le_trans H' (add_le_add_right h m)), simp[*] , },
@@ -202,7 +201,6 @@ lemma subst_lift: ∀  {a}  (t : preterm L a) (s: term L) {m i k : ℕ} (H: i �
   end
 | _ (func f)   _ _ _ _ _ _ := by refl
 | _ (fapp f t) _ _ _ _ _ _ := by simp* 
-
 
 lemma subst_subst: ∀ {a} (t : preterm L a) (s₁) {k₁}  (s₂) {k₂} (H : k₁ ≤ k₂), 
     t[s₁ ⁄ k₁][s₂ ⁄ k₂] = t[s₂ ⁄ k₂ + 1][(s₁ [s₂ ⁄ k₂ - k₁]) ⁄ k₁] 
@@ -226,7 +224,7 @@ lemma subst_subst: ∀ {a} (t : preterm L a) (s₁) {k₁}  (s₂) {k₂} (H : k
         simp[*], }, }, 
   end
 | _ (func f) _ _ _ _ _ := by refl
-| _ (fapp t s) _ _ _ _ _ := by simp* --begin unfold subst lift, congr' 1; apply subst_subst; assumption, end
+| _ (fapp t s) _ _ _ _ _ := by simp*
 
 lemma subst_lift_by_lift : ∀{a} (t : preterm L a) (s : term L) (m i k : ℕ),
     (t ↑ m ＠ ( i + k + 1 ) ) [ (s ↑ m ＠ i) ⁄ k] = (t [ s ⁄ k ]) ↑ m ＠ (i+k)
@@ -323,14 +321,13 @@ end
 end term
 variable (L)
 /--
-  The inductive definition of formulas of the language `L` for (intuitionistic) 
-  first-order logic with equality. 
-
+  `preformula L a` is a partially applied formula of first order predicate logic (with equality).
   This definition includes symbols for falsum `⊥'`, equality `='`, implication `→'`, 
-  and `∧'`, or `∨'`, universal `∀'` and existential `∃'` quantifiers, and predicates of the language `L`.
-
-  * For `a>0` this is just a partially applied predicate. 
-  * For `a=0` this is a well-definied term in the language `L`.
+  and `∧'`, or `∨'`, universal `∀'` and existential `∃'` quantifiers, a symbol `pred P`
+  for each predicate of the language `L` and `papp φ t` for applying a term `t`.
+  * For `a=0` this is a well-defined formula.
+  * For `a≠0` this is a partially applied predicate, requiring `a` more term applications to become
+    a well-formed formula.
 -/
 inductive preformula : ℕ → Type u
 | bot                           : preformula 0
@@ -369,6 +366,11 @@ notation `⊤'` := top
 
 #check ¬' (#0 =' #1)
 export preformula
+
+/- On De Bruijn indices:
+  
+
+-/
 
 namespace formula
 

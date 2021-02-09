@@ -30,8 +30,8 @@ infix ` is_successor_of' `:100 := is_successor_of
 def is_empty (x : term L) : formula L := ∀' ( (#0 ∈' x ↑₀ 1 ) ↔' ¬'(#0 =' #0) )
 postfix ` is_empty'`:100 := is_empty 
 
-def is_inductive  (x : term L) : formula L := (∀' (#0 is_empty' →' (#0 ∈' (x ↑₀ 1))))      
-  ∧' ( ∀'(#0 ∈' (x ↑₀ 1) →' (∀' (( #0 is_successor_of' #1) →' (#0 ∈' (x ↑₀ 2))))))
+def is_inductive  (x : term L) : formula L := (∀' (#0 is_empty' →' (#0 ∈' (x ↑ 1 ＠ 0))))      
+  ∧' ( ∀'(#0 ∈' (x ↑ 1 ＠  0) →' (∀' (( #0 is_successor_of' #1) →' (#0 ∈' (x ↑ 2 ＠ 0))))))
 postfix ` is_inductive'`:100 := is_inductive 
 
 @[simp] def unique_in_var0 (φ: formula L) : formula L 
@@ -217,7 +217,7 @@ begin
   apply eqI,
 end
 
--- {pair, separation} ⊢ ∀ a ∀ b ∃ X ∀ x ( x ∈ X ↔ x=b ∨ x = a ) 
+-- {pair, separation} ⊢ ∀ a ∀ b ∃ X ∀ x ( x ∈ X ↔ x = b ∨ x = a ) 
 def pairset_ex: zfc_ax ⊢ ∀' ∀' ∃' ∀' ( (#0 ∈' #1) ↔' (#0 =' #2) ∨' (#0 =' #3)) :=
 begin
   apply allI, -- given a
@@ -279,7 +279,6 @@ begin
             apply andI, -- we need to show ...
             { -- ⊢ x ∈ A
               apply hypI1 }, -- by assumption
-            
             { -- ⊢ x = 0 ∨ x=b
               apply hypI2 } },-- by assumption
           { -- ⊢ x ∈ A ∧ x=0 ∨ x=b → x ∈ {b,a}
@@ -772,6 +771,11 @@ begin
     simp[-extensionality, zfc_ax] },
 end
 
+/--
+  A formal proof that `ω` is a subset of all inductive sets.
+
+  Informally : `{zfc_ax} ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ∀ w ( w is inductive → ω ⊆ w)`
+-/
 def omega_subset_all_inductive : 
   zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' ∀' (#0 is_inductive' →' #1 '⊆ #0) )  :=
 begin
@@ -782,7 +786,7 @@ begin
   apply allI,
   apply impI,
   apply impE (#1 is_inductive'),
-  { apply hypI, simp only [set.image_insert_eq], right, left, refl},
+  { apply hypI, simp only [set.image_insert_eq], right, left, refl },
   { apply allE' _ #1,
     apply iffE₂ ( #0 ∈' #2),
     { apply hypI1, },
@@ -792,78 +796,97 @@ begin
       right, right, left, refl },
     { dsimp, refl, } },
 end
+/--
+  A formal proof that `ω` is an inductive set derived from the axioms of ZFC.
 
+  Informally : `{zfc_ax} ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ω is inductive)`
+-/
 def omega_inductive : zfc_ax ⊢ ∀' (∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) →' (#0 is_inductive')) :=
 begin
-  apply allI,
-  apply impI,
+  apply allI, -- ω
+  apply impI, -- assume `ω = { x | ∀ w ( w is inductive → x ∈ w) }`
   apply andI,
-  { apply allI,
-    apply impI,
+  { -- ω ⊢ ∀ x ( x is empty → x ∈ ω)
+    apply allI, -- ∅
+    apply impI, -- assume `∅ is empty`
     apply iffE₁ ∀'(#0 is_inductive' →' #1 ∈' #0),
-    { apply allI,
-      apply impI,
+    { -- ω ∅ ⊢ ∀ w (w is inductive → ∅ ∈ w)
+      apply allI, -- w
+      apply impI, -- assume `w is inductive`
       apply impE (#1 is_empty'),
-      { apply hypI, 
+      { -- ω ∅ w ⊢ ∅ is empty
+        apply hypI, 
         simp only [set.image_insert_eq], 
         right, left, refl, },
-      { apply allE' _ #1,
+      { -- ω ∅ w ⊢ ∅ is empty → ∅ ∈ w
+        apply allE' _ #1,
         apply andE₁,
         apply hypI1,
         unfold is_empty, refl } },
-    { apply allE_var0,
+    { -- ω ∅ ⊢ ∅ ∈ ω ↔ ∀ w (w is inductive → ∅ ∈ w)
+      apply allE_var0,
       apply hypI,
       simp only[set.image_insert_eq],
       right, left, refl } },
-  { apply allI,
-    apply impI,
-    apply allI,
-    apply impI,
-    -- #2 = ω + def
-    -- #1 = x + x ∈ ω
-    -- #0 = y + y = S(x)
+  { -- ω ⊢ ∀ (x ∈ ω → (∀ y ( y = S(x) → y ∈ ω))
+    apply allI, -- x
+    apply impI, -- assume `x ∈ ω`
+    apply allI, -- y
+    apply impI, -- assume `y=S(x)`
     apply impE ∀'(#0 is_inductive' →' #1 ∈' #0),
-    { apply allI,
-      apply impI,
+    { -- ω x y ⊢ ∀w (w is inductive → y ∈ w)
+      apply allI, -- w
+      apply impI, -- assume `w is inductive`
       apply impE (#2 ∈' #0),
-      { apply impE (#2 ∈' #3),
-        { apply hypI, 
+      { -- ω x y w ⊢ x ∈ w
+        apply impE (#2 ∈' #3),
+        { -- ω x y  ⊢ x ∈ ω
+          apply hypI, 
           simp only [set.image_insert_eq], 
           right, right, left, refl },
-        { apply allE' (#0 ∈' #4 →' #0 ∈' #1)  #2,
-          { apply impE (#0 is_inductive'),
-            { apply hypI1  },
-            { apply allE_var0,
-              { apply impE (∀' ( #0 ∈' #4 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0))),
-                { apply hypI,
-                  simp only [set.image_insert_eq],
-                   right, right, right, left, refl },
-                {
-                  apply allE' _ #3,
-                  { apply weak zfc_ax,
-                    { exact omega_subset_all_inductive, },
-                    { simp only [set.image_insert_eq, lift_zfc_ax],  
-                      assume y yh, simp[yh] } },
-                  { unfold is_inductive, refl, } } } } },
-          { refl, } } },
-      { apply impI,
+        { -- ω x y w ⊢ x ∈ ω → x ∈ w
+          apply allE' (#0 ∈' #4 →' #0 ∈' #1) #2,
+          apply impE (#0 is_inductive'),
+          { -- ω x y w ⊢ w is inductive 
+            apply hypI1 },
+          { -- ω x y w ⊢ (w is inductive) → ω ⊆ w
+            apply allE_var0,
+            apply impE (∀' ( #0 ∈' #4 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0))),
+            { -- ω x y w ⊢ ω = ω = { x | ∀ w ( w is inductive → x ∈ w) }
+              apply hypI,
+              simp only [set.image_insert_eq],
+                right, right, right, left, refl },
+            { -- ω x y w ⊢ ω = ω = { x | ∀ w ( w is inductive → x ∈ w) } → ((w is inductive) → ω ⊆ w)
+              apply allE' _ #3,
+              apply weak zfc_ax,
+              exact omega_subset_all_inductive,
+              simp only [set.image_insert_eq, lift_zfc_ax],  
+              assume y yh, simp[yh],
+              unfold is_inductive, refl, } }, 
+            refl }, },
+      { -- ω x y w ⊢ x ∈ w → y ∈ w
+        apply impI, -- assume `x ∈ w`
         apply impE (#1 is_successor_of' #2),
-        { apply hypI, 
+        { -- ω x y w ⊢ y = S(x)
+          apply hypI, 
           simp only [set.image_insert_eq],
           right, right, left, 
           dsimp[is_successor_of], refl },
-        { 
+        { -- ω x y w ⊢ y = S(x) → y ∈ w
           apply allE' _ #1,
-          { apply impE (#2 ∈' #0),
-            { apply hypI1, },
-            { apply allE' _ #2,
-              { apply andE₂, apply hypI, 
-                simp only[set.image_insert_eq],
-                right, left, refl, },
-              { unfold is_successor_of, refl } } },
-          { unfold is_successor_of, 
-            refl } } } },
-    {
+          apply impE (#2 ∈' #0),
+          { -- ω x y w ⊢ x ∈ w
+            apply hypI1, },
+          { -- ω x y w ⊢ x ∈ w → (∀ y ( y = S(x) → y ∈ w))
+            apply allE' _ #2,
+            apply andE₂, 
+            apply hypI, 
+            simp only[set.image_insert_eq],
+            right, left, refl,
+            unfold is_successor_of, refl },
+        { unfold is_successor_of, 
+          refl } } } },
+    { -- ω x y ⊢ ∀w (w is inductive → y ∈ w) → y ∈ ω
       apply iffE_l,
       apply allE_var0,
       apply hypI,
@@ -871,25 +894,35 @@ begin
       right, right, left, refl } },
 end
 
+/--
+  A formal proof that `ω` is the smallest inductive set.
+
+  Informally : 
+  `{zfc_ax} ⊢ ∀ ω ( ω = { x | ∀ w ( w is inductive → x ∈ w) } → ( (ω is inductive) ∧ ∀ w (w is inductive → ω ⊆ w))`
+-/
 def omega_smallest_inductive : 
-  zfc_ax ⊢ ∃'((#0 is_inductive') ∧' ∀'((#0 is_inductive') →' #1 '⊆ #0)) :=
+  zfc_ax ⊢ ∀' ( ∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) 
+                    →' ((#0 is_inductive') ∧' ∀'((#0 is_inductive') →' #1 '⊆ #0))) :=
 begin
-  apply exE ∀' ( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)),
-  { apply omega_ex },
-  { apply exI #0,
-    apply andI,
-    { apply impE_insert,
-      apply allE_var0,
-      simp only [lift_zfc_ax],
-      apply omega_inductive },
-    { apply impE_insert,
-      apply allE_var0,
-      simp only [lift_zfc_ax],
-      apply omega_subset_all_inductive } },
+  apply allI, -- ω
+  apply impI, -- ω = { x | ∀ w ( w is inductive → x ∈ w) }
+  apply andI,
+  { -- ω ⊢ ω is inductive 
+    apply impE_insert,
+    apply allE_var0,
+    simp only [lift_zfc_ax],
+    apply omega_inductive
+  },
+  { -- ω ⊢ ∀ w (w is inductive → ω ⊆ w)
+    apply impE_insert,
+    apply allE_var0,
+    simp only [lift_zfc_ax],
+    apply omega_subset_all_inductive },
 end
 
 theorem omega_smallest_inductive_provable_witin_zfc :
- (∃'((#0 is_inductive') ∧' ∀'((#0 is_inductive') →' #1 '⊆ #0))) is_provable_within zfc_ax :=
+ ∀' ( ∀'( #0 ∈' #1 ↔' ∀' (#0 is_inductive' →' #1 ∈' #0)) 
+      →' ((#0 is_inductive') ∧' ∀'((#0 is_inductive') →' #1 '⊆ #0))) is_provable_within zfc_ax :=
 begin use omega_smallest_inductive, end
 
 end zfc
