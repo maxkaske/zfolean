@@ -1,94 +1,123 @@
 import fol
 import data.set
 
-open fol
+/-!
+# IZF set theory
+
+In this file we define the signature and axioms of intuitionistic Zermelo-Fraenkel set theory
+and give a natural deduction proof of the induction principle in its set theoretical form.
+
+We also briefly discuss how statements about named variables like 
+  "φ is a formula with B not free"
+in the formulation of the axiom schemes of separation and collection
+can be translated to De Bruijn variables using lifts.
+
+## Main results
+
+- `omega_smallest_inductive_provable_within_izf`: 
+    we show that ZFC proves that ω is the smallest inductive set. a direct consequence of
+- `omega_smallest_inductive`: 
+    a natural deduction proof that ω is the smallest inductive set
+
+## References
+* [P. Aczel, M. Rathjen, *Notes on Constructive Set Theory*] [AR01]
+  -- for the axioms of IZF
+* [L. Crosilla, *Set Theory: Constructive and Intuitionistic ZF*] [LC20]
+  -- for cross referencing
+-/
+
 
 namespace izf
+open fol
 universe variable u
 
+section izf_signature
+
+-- pp notation for inserting elements into a data.set
 local infix ` >> ` := insert
 
-inductive pred_symbols : ℕ → Type u
-| elem : pred_symbols 2
---| subset : pred_symbols 2
+/- We will use single predicate for membership -/
+inductive pred_symb : ℕ → Type u
+| elem : pred_symb 2
+--| subset : pred_symb 2
 
-inductive func_symbols : ℕ → Type u
-| empty : func_symbols 0
-| omega : func_symbols 0
-| union : func_symbols 1
-| power : func_symbols 1
-| pair  : func_symbols 2
---| succ  : func_symbols 1
+/- We allow constants for the empty set and ω,
+  unary function symbols for the union set and the powerset
+  and a binary function symbol for the pair set -/
+inductive func_symb : ℕ → Type u
+| empty : func_symb 0
+| omega : func_symb 0
+| union : func_symb 1
+| power : func_symb 1
+| pair  : func_symb 2
+--| succ  : func_symb 1
  
-def L : language := { functions := func_symbols , predicates := pred_symbols }
+def 𝒮 : signature := { func_symb:= izf.func_symb , pred_symb:= izf.pred_symb }
 
--- functions
-@[simp]def emptyset : term L := (func func_symbols.empty : term L)
-@[simp]def omegaset : term L := (func func_symbols.omega : term L)
-@[simp]def unionset (t: term L) : term L :=  fapp (func func_symbols.union) t
-@[simp]def powerset (t : term L) : term L := fapp (func func_symbols.power) t
-@[simp]def pairset (t₁ t₂ : term L) : term L := fapp (fapp (func func_symbols.pair) t₁) t₂
---def successorset (t: term L) : term L :=  fapp (func func_symbols.succ) t
+-- Definitions and notations for our functions
+@[simp]def emptyset                 : term 𝒮 := (func func_symb.empty : term 𝒮)
+@[simp]def omegaset                 : term 𝒮 := (func func_symb.omega : term 𝒮)
+@[simp]def unionset (t : term 𝒮)    : term 𝒮 :=  fapp (func func_symb.union) t
+@[simp]def powerset (t : term 𝒮)    : term 𝒮 := fapp (func func_symb.power) t
+@[simp]def pairset (t₁ t₂ : term 𝒮) : term 𝒮 := fapp (fapp (func func_symb.pair) t₁) t₂
+--def successorset (t: term 𝒮) : term 𝒮 :=  fapp (func func_symb.succ) t
 
-notation `⌀`:= emptyset 
-notation `ω` := omegaset
-prefix ⋃  := unionset
-prefix 𝒫  := powerset
+notation `⌀`  := emptyset -- this is not ∅; type ⌀ using \diameter
+notation `ω`  := omegaset
+prefix ⋃      := unionset
+prefix 𝒫      := powerset
 --prefix S:max := successorset
-notation ⦃ a ` , ` b ⦄ := pairset a b  
- notation ⦃ a ⦄ := pairset a a
+notation ⦃ a ` , ` b ⦄ := pairset a b  -- type ⦃ and ⦄ using \{{ and \}}
+notation ⦃ a ⦄ := pairset a a
 
--- #check {' ω , 𝒫⌀ }'
-
-/- 
-  still only a single predicate; but for a good reason: 
-  as it turns out, making the subset relation part of our meta language
-  makes it much more convenient to proof things 
--/
-@[simp] def memb (t₁ t₂: term L): formula L := papp (papp (pred pred_symbols.elem) t₁) t₂
+-- Definition and notation for our predicate
+@[simp] def memb (t₁ t₂: term 𝒮): formula 𝒮 := papp (papp (pred pred_symb.elem) t₁) t₂
 infix ` ∈' `:100 := memb
 
--- def subset (t₁ t₂: term L): formula L := papp (papp (pred_symbols pred_symbols.subset) t₁) t₂
-@[simp] def subset (t₁ t₂: term L): formula L := ∀'( #0 ∈' (t₁ ↑ 1 ＠  0) →' #0 ∈' (t₂ ↑ 1 ＠  0))
+-- Meta predicates and functions
+-- def subset (t₁ t₂: term 𝒮): formula 𝒮 := papp (papp (pred_symb pred_symb.subset) t₁) t₂
+@[simp] def subset (t₁ t₂: term 𝒮): formula 𝒮 := ∀'( #0 ∈' (t₁ ↑ 1 ＠  0) →' #0 ∈' (t₂ ↑ 1 ＠  0))
 infix ` ⊆' `:100 := subset
 
-@[simp] def successor_set (t: term L) : term L := ⋃⦃ t , ⦃ t ⦄ ⦄
+@[simp] def successor_set (t: term 𝒮) : term 𝒮 := ⋃⦃ t , ⦃ t ⦄ ⦄
 prefix `S`:max := successor_set
 
-@[simp] def is_inductive (t : term L) 
+@[simp] def is_inductive (t : term 𝒮) 
   := ⌀ ∈' t ∧' ∀' (#0 ∈' (t ↑ 1 ＠  0) →' S #0 ∈' (t ↑ 1 ＠  0))
 postfix ` is_inductive`:max := is_inductive
 
-@[simp] def unique_in_var0 (φ: formula L) : formula L 
-  :=  ∀' ∀' (  (φ  ↑ 1 ＠ 1 ) ∧' ( φ ↑ 1 ＠ 0 ) →' (#0 =' #1) )
+@[simp] def unique_in_var0 (φ: formula 𝒮) : formula 𝒮 
+  :=  ∀' ∀' ((φ ↑ 1 ＠ 1 ) ∧' (φ ↑ 1 ＠ 0) →' (#0 =' #1) )
 
-@[simp] def unique_ex (φ : formula L) : formula L 
+@[simp] def unique_ex (φ : formula 𝒮) : formula 𝒮 
   := (∃'φ) ∧' (unique_in_var0 φ)
 prefix `∃!`:110 := unique_ex 
 
--- reducing terms helps with evaluating lifts and substituions
--- however, pred_symbols and func_symbols will make more difficult:                        
+end izf_signature
+
+-- reducing terms helps with evaluating lifts and substitutions
+-- however, pred_symb and func_symb will make more difficult:                        
 -- #reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄ ∈' 𝒫#1) ↑ 1 ＠ 1                   
 /-
-((pred pred_symbols.elem).papp (func func_symbols.empty)).papp (func func_symbols.omega) ∧'
-  ((pred pred_symbols.elem).papp
-     (((func func_symbols.pair).fapp (func func_symbols.empty)).fapp
-        ((func func_symbols.union).fapp
-           (((func func_symbols.pair).fapp (((func func_symbols.pair).fapp #4).fapp #4)).fapp
-              (((func func_symbols.pair).fapp (((func func_symbols.pair).fapp #4).fapp #4)).fapp
-                 (((func func_symbols.pair).fapp #4).fapp #4)))))).papp
-    ((func func_symbols.power).fapp #2)
+((pred pred_symb.elem).papp (func func_symb.empty)).papp (func func_symb.omega) ∧'
+  ((pred pred_symb.elem).papp
+     (((func func_symb.pair).fapp (func func_symb.empty)).fapp
+        ((func func_symb.union).fapp
+           (((func func_symb.pair).fapp (((func func_symb.pair).fapp #4).fapp #4)).fapp
+              (((func func_symb.pair).fapp (((func func_symb.pair).fapp #4).fapp #4)).fapp
+                 (((func func_symb.pair).fapp #4).fapp #4)))))).papp
+    ((func func_symb.power).fapp #2)
 -/
 
 -- this seems helps pretty printing reduced terms and formulas and makes them much easier to read
-notation `'⌀` := func func_symbols.empty
-notation `'ω` := func func_symbols.omega
-notation `'⋃` t :=  fapp (func func_symbols.union) t
-notation `'𝒫` t := fapp (func func_symbols.power) t 
---notation `'S` t := fapp (func func_symbols.succ) t
-notation `'{ ` a ` , `b` }` := fapp (fapp (func func_symbols.pair) a) b
-notation s ` '∈ `:100 t := papp (papp (pred pred_symbols.elem) s) t
-notation s ` '⊆ `:100 t := papp (papp (pred pred_symbols.subset) s) t
+notation `'⌀` := func func_symb.empty
+notation `'ω` := func func_symb.omega
+notation `'⋃` t :=  fapp (func func_symb.union) t
+notation `'𝒫` t := fapp (func func_symb.power) t 
+--notation `'S` t := fapp (func func_symb.succ) t
+notation `'{ ` a ` , `b` }` := fapp (fapp (func func_symb.pair) a) b
+notation s ` '∈ `:100 t := papp (papp (pred pred_symb.elem) s) t
+notation s ` '⊆ `:100 t := papp (papp (pred pred_symb.subset) s) t
 
 -- after
 -- #reduce (⌀ ∈' ω  ∧' ⦃ ⌀, S⦃ #3 ⦄ ⦄∈' 𝒫#1) ↑ 1 ＠ 1      
@@ -97,12 +126,39 @@ notation s ` '⊆ `:100 t := papp (papp (pred pred_symbols.subset) s) t
 -/
 -- much better
 
--- all things axiom scheme of separation
-namespace separation
+section izf_axioms
 
-@[simp] def formula (φ : formula L): formula L 
+namespace separation
+/-
+  The separation axiom scheme is defined as the closure* of
+    `∀A ∃B ∀x ( x ∈ B ↔ x ∈ A ∧ φ)` (1)
+  for all formulas `φ` such that `B` is not free in `φ`.
+  Ignoring variable names we see that the existential quantifier 
+  binds variables of `φ` pointing to `1`.
+  We can avoid such bindings by simply requiring that 
+    `φ = ψ ↑ 1 ＠ 1` 
+  for a formula `ψ`.
+  On the other hand, if no index points to `1`, then one can check that
+    `φ = φ[#0/1] ↑ 1 ＠ 1`**,
+  reducing the side condition to a question about lifts.
+  As an added bonus this allows us to state the axiom of separation 
+  without any side condition as the closure of the formula below.
+
+  (*) See further below.
+  (**) Exercise 1: Generalize this and proof it in lean.
+-/
+@[simp] def formula (φ : formula 𝒮): formula 𝒮 
   := ∀' ∃' ∀' ((#0 ∈' #1)  ↔' (#0 ∈' #2 ∧' (φ  ↑ 1 ＠  1)))
 
+/-
+  To define the closure of (1) we usually state separation in terms of formulas φ(x, A, x₁, ... , xₙ)
+  with free variables among (but not necessarily exactly) x, A, x₁, ... , xₙ.
+  The closure is then given by
+    `∀xₙ ... ∀x₁ ∀A ∃B ∀x ( x ∈ B ↔ x ∈ A ∧ φ)`. (1')
+  For our De Bruijn representation of variables this translates to `φ_h: closed (n+2) φ`,
+  so `formula φ` has no n-free variables (see lemma below) and its closure (as defined in fol)
+  gives us an De Bruijn version of (1') and invariance under lifts.
+-/
 lemma closed{k} {φ} (H: closed (k+2) φ) : closed k (formula φ)  :=
 begin
   have h₁: ¬ k + 3 ≤ 2, by linarith,
@@ -112,136 +168,178 @@ begin
   simp[h₁, h₃],
 end
 
-@[simp] def sentence (φ  : fol.formula L) {k : ℕ} (H: fol.formula.closed (k+2) φ) : fol.formula L 
-    := alls k (formula φ)
+def sentence  (φ : fol.formula 𝒮) {n : ℕ} (φ_h: formula.closed (n+2) φ) : fol.formula 𝒮 
+  := formula.closure (formula φ) (closed φ_h)
 
-lemma is_sentence {k : ℕ} {φ  : fol.formula L} (H: fol.formula.closed (k+2) φ) :
+lemma is_sentence {k : ℕ} (φ  : fol.formula 𝒮) (H: fol.formula.closed (k+2) φ) :
   (sentence φ H) is_sentence' := begin exact closure_is_sentence (closed H) end
 
-lemma mem {Γ:set $ fol.formula L} (φ) (k) (φ_h: formula.closed (k+2) φ) 
+lemma lift_sentence (φ) (n) (φ_h: fol.formula.closed (n+2) φ) (m i) 
+  : (sentence φ φ_h) ↑ m ＠  i = sentence φ φ_h := lift_sentence_id (is_sentence _ _)
+
+
+/- To following definition and lemmas are used to make future proofs more explicit and readable. -/
+lemma mem {Γ:set $ fol.formula 𝒮} (φ) (k) (φ_h: formula.closed (k+2) φ) 
   {ψ} (h : ψ = sentence φ φ_h) (H: (sentence φ φ_h) ∈ Γ) : ψ ∈ Γ :=
 begin subst h, exact H, end 
 
-lemma lift_sentence (φ) (k) (φ_h: fol.formula.closed (k+2) φ) (m i) 
-  : (sentence φ φ_h) ↑ m ＠  i = sentence φ φ_h := lift_sentence_id (is_sentence _)
+def scheme : set $ fol.formula 𝒮 := 
+  { (sentence φ φ_h) |  (φ : fol.formula 𝒮) (k: ℕ) (φ_h : formula.closed (k+2) φ) } 
 
-def scheme : set $ fol.formula L := 
-  { (sentence φ φ_h) |  (φ : fol.formula L) (k: ℕ) (φ_h : formula.closed (k+2) φ) } 
-
-lemma mem_scheme (φ : fol.formula L) {k : ℕ} (φ_h: fol.formula.closed (k+2) φ)
+lemma mem_scheme (φ : fol.formula 𝒮) {k : ℕ} (φ_h: fol.formula.closed (k+2) φ)
   : sentence φ φ_h ∈ scheme := begin existsi [φ, k, φ_h], refl end
  
 end separation
 
-@[simp] def separation := separation.sentence
 
--- all things axiom scheme of replacement
-namespace replacement
+namespace collection
+/-
+  The collection axiom scheme is defined as the closure of
+    `∀A ( ∀x(x ∈ A → ∃y φ) → ∃B ∀x (x ∈ A →  ∃y (y ∈ B ∧ φ)` (1)
+  for all formulas φ such that B is not free in φ.
+  Observe that in this case the the quantifier before B binds variables pointing to 2.
+  Thus the side condition can be stated as
+    `φ = ψ ↑ 1 ＠ 2` 
+  for a formula `ψ` and we obtain our axiom scheme as the closure of the formula below.
+-/
+@[simp] def formula (φ: formula 𝒮) := 
+  (∀'( ∀'(#0 ∈' #1 →' ∃'φ) →' ( ∃' ∀' ( #0 ∈' #2 →' (∃' (#0 ∈' #2 ∧' (φ ↑ 1 ＠ 2))))))) 
+/-
+  To define the closure of (1) we usually state collection in terms of formulas φ(x, y, A, x₁, ... , xₙ)
+  with free variables among (but not necessarily exactly) x, y, A, x₁, ... , xₙ.
 
-@[simp] def formula (φ: formula L) := 
-  (∀'( ∀'(#0 ∈' #1 →' ∃!φ) →' ( ∃' ∀' ( #0 ∈' #2 →' (∃' (#0 ∈' #2 ∧' (φ ↑ 1 ＠ 2))))))) 
-
+  This then translates to `φ_h: closed (n+3) φ` and we can proceed as in the case of separation.
+-/
 lemma closed  {φ} {k} (H: closed (k+3) φ) : closed k (formula φ) :=
 begin
-    have : ¬ k+4 ≤ 3, by linarith,
-    have : ¬ k+4 ≤ 2, by linarith,
-    have : ¬ k+3 ≤ 2, by linarith,
-    have h₁ : 0 ≤ k+3, from (k+3).zero_le,
-    have h₂ : 1 ≤ k+3, by linarith,
-    have h₃ : 2 ≤ k+3, by linarith,
-    have H₁ : (φ ↑ 1 ＠ 0) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 0,
-      begin rw ←(lift_lift φ 1 1 h₁), congr, exact H, end,
-    have H₂ : (φ ↑ 1 ＠ 1) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 1,
-      begin rw ←(lift_lift φ 1 1 h₂), congr, exact H, end,
-    have H₃ : (φ ↑ 1 ＠ 2) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 2,
-      begin rw ←(lift_lift φ 1 1 h₃), congr, exact H, end,
-    rw closed at H, clear h₂,
-    simp[*, closed],
+  have : ¬ k+4 ≤ 2, by linarith,
+  have : ¬ k+3 ≤ 2, by linarith,
+  have h₁ : 0 ≤ k+3, from (k+3).zero_le,
+  have h₂ : 1 ≤ k+3, by linarith,
+  have h₃ : 2 ≤ k+3, by linarith,
+  have H₁ : (φ ↑ 1 ＠ 0) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 0,
+    begin rw ←(lift_lift φ 1 1 h₁), congr, exact H, end,
+  have H₂ : (φ ↑ 1 ＠ 1) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 1,
+    begin rw ←(lift_lift φ 1 1 h₂), congr, exact H, end,
+  have H₃ : (φ ↑ 1 ＠ 2) ↑ 1 ＠ (k + 4) = φ ↑ 1 ＠ 2,
+    begin rw ←(lift_lift φ 1 1 h₃), congr, exact H, end,
+  rw closed at H, clear h₂,
+  simp[*, closed],
 end 
 
-def sentence  (φ : fol.formula L) {k : ℕ} (H: formula.closed (k+3) φ) : fol.formula L 
-  := alls k (formula φ)
+def sentence  (φ : fol.formula 𝒮) {k : ℕ} (H: formula.closed (k+3) φ) : fol.formula 𝒮 
+  := formula.closure (formula φ) (closed H)
 
-lemma is_sentence  {φ : fol.formula L} {k : ℕ} (H: fol.formula.closed (k+3) φ) :
+lemma is_sentence  (φ : fol.formula 𝒮) {k : ℕ} (H: fol.formula.closed (k+3) φ) :
   (sentence φ H) is_sentence' := begin exact closure_is_sentence (closed H) end
 
-lemma mem {Γ:set $ fol.formula L} {ψ} {k} (φ) (φ_h: formula.closed (k+3) φ) 
+/- To following definition and lemmas are used to make future proofs more explicit and readable. -/
+lemma mem {Γ:set $ fol.formula 𝒮} {ψ} {k} (φ) (φ_h: formula.closed (k+3) φ) 
   (h : ψ = sentence φ φ_h) (H: (sentence φ φ_h) ∈ Γ) : ψ ∈ Γ :=
 begin subst h, exact H end 
 
-def scheme : set $ fol.formula L := 
-  { (sentence φ φ_h) |  (φ : fol.formula L) (k: ℕ) (φ_h : fol.formula.closed (k+3) φ) }
+def scheme : set $ fol.formula 𝒮 := 
+  { (sentence φ φ_h) |  (φ : fol.formula 𝒮) (k: ℕ) (φ_h : fol.formula.closed (k+3) φ) }
 
-lemma mem_scheme (φ : fol.formula L) {k : ℕ} (φ_h: fol.formula.closed (k+3) φ)
+lemma mem_scheme (φ : fol.formula 𝒮) {k : ℕ} (φ_h: fol.formula.closed (k+3) φ)
   : sentence φ φ_h ∈ scheme := begin existsi [φ, k, φ_h], refl, end
 
-end replacement
+end collection
 
-@[simp] def replacement := replacement.sentence
+namespace set_induction
+/-
+  The set induction axiom scheme is defined as the closure of
+    `∀A (∀x (x ∈ A → φ(x)) → φ) → ∀A φ` (1)
+  for all formulas φ.
+-/
+@[simp] def formula (φ: formula 𝒮) := 
+  (∀'(∀'(#0 ∈' #1 →' (φ ↑ 1 ＠ 1)) →' φ ) →' (∀'φ))
+
+/-
+  To define the closure of (1) we usually state collection in terms of formulas φ( A, x₁, ... , xₙ)
+  with free variables among (but not necessarily exactly) A, x₁, ... , xₙ.
+
+  This then translates to `φ_h: closed (n+1) φ` and we can proceed as in the case of separation.
+-/
+lemma closed  {φ} {n} (φ_h: closed (n+1) φ) : closed n (formula φ) :=
+begin
+  have : φ ↑ 1 ＠ 1 ↑ 1 ＠ (n + 1 + 1) = φ ↑ 1 ＠ 1 :=
+  begin rw ←(lift_lift φ 1 1 (nat.succ_pos n)), congr, exact φ_h, end,
+  rw closed at φ_h,
+  simp*,
+end 
+
+def sentence  (φ : fol.formula 𝒮) {n : ℕ} (φ_h: formula.closed (n+1) φ) : fol.formula 𝒮 
+  := formula.closure (formula φ) (closed φ_h)
+
+lemma is_sentence  (φ : fol.formula 𝒮) {n : ℕ} (φ_h: fol.formula.closed (n+1) φ) :
+  (sentence φ φ_h) is_sentence' := begin exact closure_is_sentence (closed φ_h) end
+
+/- To following definition and lemmas are used to make future proofs more explicit and readable. -/
+lemma mem {Γ:set $ fol.formula 𝒮} {ψ} (φ) {n} (φ_h: formula.closed (n+1) φ) 
+  (h : ψ = sentence φ φ_h) (H: (sentence φ φ_h) ∈ Γ) : ψ ∈ Γ :=
+begin subst h, exact H end 
+
+def scheme : set $ fol.formula 𝒮 := 
+  { (sentence φ φ_h) |  (φ : fol.formula 𝒮) (k: ℕ) (φ_h : fol.formula.closed (k+1) φ) }
+
+lemma mem_scheme (φ : fol.formula 𝒮) {k : ℕ} (φ_h: fol.formula.closed (k+1) φ)
+  : sentence φ φ_h ∈ scheme := begin existsi [φ, k, φ_h], refl, end
+
+end set_induction
 
 
--- axioms
-@[simp] def extensionality : formula L := ∀' ∀' ( (∀' (#0 ∈' #1 ↔' #0 ∈' #2)) →' (#0 =' #1) )
-@[simp] def emptyset_ax    : formula L := ∀' (#0 ∈' ⌀ ↔' ¬'(#0 =' #0) )
-@[simp] def pairset_ax     : formula L := ∀' ∀' ∀' ( #0 ∈' ⦃ #1 , #2 ⦄ ↔' (#0 =' #1 ∨' #0 =' #2))
-@[simp] def unionset_ax    : formula L := ∀' ∀' ( #0 ∈' ⋃#1 ↔' ∃'( #1 ∈' #0 ∧' #0 ∈' #2))
-@[simp] def powerset_ax    : formula L := ∀' ∀' (#0 ∈' 𝒫#1 ↔' #0 ⊆' #1)
-@[simp] def omega_ax       : formula L := ∀' (#0 ∈' ω ↔' ∀'( (#0 is_inductive) →' #1 ∈' #0))
--- axiom schemes
-@[simp] def mem_induction  (φ : formula L) {k : ℕ} (H: closed (k+1) φ) : formula L  
-  := alls k (∀'(∀'(#0 ∈' #1 →' (φ →' (φ ↑ 1 ＠ 0)))) →' (∀'φ))
-@[simp] def separation_ax  (φ : formula L) {k : ℕ} (H: closed (k+2) φ) : formula L 
-  := separation φ H
-@[simp] def replacement_ax (φ : formula L) {k : ℕ} (H: closed (k+3) φ) : formula L 
-  := replacement φ H
+/- ∀b ∀a (∀x (x ∈ a ↔ x ∈ b) → a = b) -/
+@[simp] def extensionality : formula 𝒮 := ∀' ∀' ( (∀' (#0 ∈' #1 ↔' #0 ∈' #2)) →' (#0 =' #1) )
+/- ∀x ( x ∈ ⌀ ↔ x ≠ x) -/
+@[simp] def emptyset_ax    : formula 𝒮 := ∀' (#0 ∈' ⌀ ↔' ¬'(#0 =' #0) )
+/- ∀b ∀a ∀x (x ∈{a,b} ↔ x = a ∨ x = b) -/
+@[simp] def pairset_ax     : formula 𝒮 := ∀' ∀' ∀' ( #0 ∈' ⦃ #1 , #2 ⦄ ↔' (#0 =' #1 ∨' #0 =' #2))
+/- ∀F ∀x (x ∈ ⋃F ↔ ∃y (x ∈ y ∧ y ∈ x))  -/
+@[simp] def unionset_ax    : formula 𝒮 := ∀' ∀' ( #0 ∈' ⋃#1 ↔' ∃'( #1 ∈' #0 ∧' #0 ∈' #2))
+/- ∀y ∀x (x ∈ 𝒫(y) → x ⊆ y) -/
+@[simp] def powerset_ax    : formula 𝒮 := ∀' ∀' (#0 ∈' 𝒫#1 ↔' #0 ⊆' #1)
+/- ∀x ( x ∈ ω ↔ ∀w (w is inductive → x ∈ w)) -/
+@[simp] def omega_ax       : formula 𝒮 := ∀' (#0 ∈' ω ↔' ∀'( (#0 is_inductive) →' #1 ∈' #0))
+/- ∀xₙ ... ∀x₁ ∀A (∀x (x ∈ A → φ(x)) → φ(A)) → ∀A φ(A) -/
+@[simp] def set_induction_ax  (φ : formula 𝒮) {n : ℕ} (φ_h: closed (n+1) φ) : formula 𝒮  
+  := set_induction.sentence φ φ_h
+/-- ∀xₙ ... ∀x₁ ∀A ∃B ∀x ( x ∈ B ↔ x ∈ A ∧ φ ↑ 1 ＠ 1) -/
+@[simp] def separation_ax  (φ : formula 𝒮) {n: ℕ} (φ_h: closed (n+2) φ) : formula 𝒮 
+  := separation.sentence φ φ_h
+/-- ∀xₙ ... ∀x₁ ∀A ( ∀x(x ∈ A → ∃y φ) → ∃B ∀x (x ∈ A →  ∃y (y ∈ B ∧ φ) -/
+@[simp] def collection_ax (φ : formula 𝒮) {n : ℕ} (φ_h: closed (n+3) φ) : formula 𝒮 
+  := collection.sentence φ φ_h
 
 -- optional: definition of the subset predicate
--- @[simp] def subset_def   : formula L := ∀' ∀' ( #0 ⊆' #1  ↔' ∀' (#0 ∈' #1 →' #0 ∈' #2) )
+-- @[simp] def subset_def   : formula 𝒮 := ∀' ∀' ( #0 ⊆' #1  ↔' ∀' (#0 ∈' #1 →' #0 ∈' #2) )
 
 /-
  * The following lemmas provide a convenient way to make explicit which axioms are used inside our proofs.
- * For separation and replacement we can use separation.mem and replacement.mem respectively.
+ * For separation and collection we can use separation.mem and collection.mem respectively.
 -/
-lemma extensionality_mem {Γ: set $ formula L}{φ}(h: φ = extensionality)(H: extensionality ∈ Γ) : φ ∈ Γ :=
+lemma extensionality_mem {Γ: set $ formula 𝒮}{φ}(h: φ = extensionality)(H: extensionality ∈ Γ) : φ ∈ Γ :=
 begin subst h, exact H end
-lemma emptyset_ax_mem {Γ: set $ formula L} {φ} (h: φ = emptyset_ax) (H: emptyset_ax ∈ Γ)  : φ ∈ Γ :=
+lemma emptyset_ax_mem {Γ: set $ formula 𝒮} {φ} (h: φ = emptyset_ax) (H: emptyset_ax ∈ Γ)  : φ ∈ Γ :=
 begin subst h, exact H end
-lemma pairset_ax_mem {Γ: set $ formula L} {φ} (h: φ = pairset_ax) (H: pairset_ax ∈ Γ)  : φ ∈ Γ :=
+lemma pairset_ax_mem {Γ: set $ formula 𝒮} {φ} (h: φ = pairset_ax) (H: pairset_ax ∈ Γ)  : φ ∈ Γ :=
 begin subst h, exact H end
-lemma unionset_ax_mem {Γ: set $ formula L} {φ} (h: φ = unionset_ax) (H: unionset_ax ∈ Γ)  : φ ∈ Γ :=
+lemma unionset_ax_mem {Γ: set $ formula 𝒮} {φ} (h: φ = unionset_ax) (H: unionset_ax ∈ Γ)  : φ ∈ Γ :=
 begin subst h, exact H end
-lemma powerset_ax_mem {Γ: set $ formula L} {φ} (H: powerset_ax ∈ Γ) (h: φ = powerset_ax) : φ ∈ Γ :=
+lemma powerset_ax_mem {Γ: set $ formula 𝒮} {φ} (H: powerset_ax ∈ Γ) (h: φ = powerset_ax) : φ ∈ Γ :=
 begin subst h, exact H end
-lemma omega_ax_mem {Γ: set $ formula L} {φ} (h: φ = omega_ax) (H: omega_ax ∈ Γ) : φ ∈ Γ :=
-begin subst h, exact H end
-lemma mem_induction_mem {Γ:set $ fol.formula L} {ψ} (φ k) (φ_h: closed (k+1) φ) 
-  ( h : ψ = mem_induction φ φ_h) (H: (mem_induction φ φ_h) ∈ Γ) : ψ ∈ Γ := 
+lemma omega_ax_mem {Γ: set $ formula 𝒮} {φ} (h: φ = omega_ax) (H: omega_ax ∈ Γ) : φ ∈ Γ :=
 begin subst h, exact H end
 
-/-- The set all ∈-induction axioms -/
-def mem_induction_scheme : set $ fol.formula L
-  := { (mem_induction φ φ_h) |  (φ : formula L) (k: ℕ) (φ_h : closed (k+1) φ) }
-
-lemma mem_induction_is_sentence  {φ} {k} (φ_h: closed (k+1) φ) 
-  : (mem_induction φ φ_h) is_sentence' :=
-begin
-  apply closure_is_sentence,
-  have : φ ↑ 1 ＠ 0 ↑ 1 ＠ (k + 1 + 1) = φ ↑ 1 ＠ 0,
-    begin rw ←lift_lift φ, congr, exact φ_h, exact zero_le (k + 1), end,
-  have :  φ ↑ 1 ＠ (k + 1 + 1) = φ,
-    begin apply trivial_lift_monotone φ_h, exact (k + 1).le_succ, end,
-  simp[*], 
-  exact φ_h,
-end
 
 /--
   The set of axioms for IZF.
 -/
-def izf_ax : set $ formula L := { extensionality, emptyset_ax, pairset_ax, 
+def izf_ax : set $ formula 𝒮 := { extensionality, emptyset_ax, pairset_ax, 
                                   unionset_ax, powerset_ax, omega_ax } 
-                                  ∪ mem_induction_scheme
+                                  ∪ set_induction.scheme
                                   ∪ separation.scheme
-                                  ∪ replacement.scheme
+                                  ∪ collection.scheme
 
 lemma izf_ax_set_of_sentences : ∀ ϕ ∈ izf_ax , sentence ϕ :=
 begin
@@ -251,22 +349,28 @@ begin
   all_goals { cases h_h with k H,
               cases H with ϕ_closed,
               subst H_h },
-  exact mem_induction_is_sentence ϕ_closed,
-  exact separation.is_sentence ϕ_closed,
-  exact replacement.is_sentence ϕ_closed,
+  exact set_induction.is_sentence _ ϕ_closed,
+  exact separation.is_sentence _ ϕ_closed,
+  exact collection.is_sentence _ ϕ_closed,
 end
 
-lemma lift_izf_ax {m i : ℕ}: (λ (ϕ: formula L) , ϕ ↑ m ＠ i) '' izf_ax = izf_ax 
+lemma lift_izf_ax {m i : ℕ}: (λ (ϕ: formula 𝒮) , ϕ ↑ m ＠ i) '' izf_ax = izf_ax 
   := lift_set_of_sentences_id izf_ax_set_of_sentences
 
-/--
-  TODO : think of a good term to refer to the free variable "places"(?)
-  Proof scheme showing uniqueness of a set X = { x | φ(x) } defined by a formula  φ,
-  provided φ does not reference X.
+end izf_axioms
 
-  Uses: extensionality
+
+section izf_proofs
+
+/--
+  Proof scheme. 
+  Provides a formal proof of uniqueness of y
+  satisfying formulas of the form `∀x (x ∈ y ↔ φ )`,
+  provided `y` is not free in `φ`.
+
+  Informally : {extensionality} ⊢ ∀y₁ ∀y₀ ( y₀ = { x | φ } ∧ y₁ = { x | φ } → y₀ = y₁)
 -/
-def extensionality_implies_uniqueness (φ : formula L)
+def extensionality_implies_uniqueness (φ : formula 𝒮)
   : {extensionality} ⊢ unique_in_var0  ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1)) :=
 begin
   apply allI, -- y₁
@@ -299,13 +403,12 @@ begin
     simp,
     simp, },
 end
+
 /--
-  A proof scheme showing uniqueness of sets x₀ = { x | ψ(x) } defined by a formula φ,
-  provided ψ does not reference x₀ (i.e. the free variable at place 0).
+  QoL version of `extensionality_implies_uniqueness`
 
-  In technical terms this means that `p` is of the form `ψ = φ ↑ 1 ＠ 1`. 
-
-  Uses:  extensionality
+  Informally : `Γ ⊢ ∀y₁ ∀y₀ (ψ(y₀) ∧ ψ(y₁) → y₀ = y₁`,
+  provided  `ψ(y) = ∀x (x ∈ y ↔ φ )`, `y` not free in `φ` and `extensionality ∈ Γ`.
 -/
 def extensionality_implies_uniqueness' {Γ} (φ) {ψ} (h: ψ = ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1) ) ) (H: extensionality ∈ Γ)  
   : Γ ⊢ unique_in_var0 ψ :=
@@ -316,14 +419,11 @@ begin
 end
 
 /--
-  Proof scheme showing uniqueness of x₁ = { x | φ(x, x₂, ... ) } defined by a formula φ
-  for all x₁ ... xₙ, provided φ does not reference x₁.
+  `n`-closure variant of `extensionality_implies_uniqueness` 
 
-  Note: The formula shown is not necesserily a sentence.
-
-  Uses: extensionality
+  Informally : `{extensionality} ⊢ ∀xₙ ... ∀x₁ ∀y₁ ∀y₀ ( y₀ = { x | φ } ∧ y₁ = { x | φ } → y₀ = y₁)`
 -/
-def extensionality_implies_uniqueness_alls  (n)  (φ : formula L)
+def extensionality_implies_uniqueness_alls  (n)  (φ : formula 𝒮)
   : {extensionality} ⊢ alls n (unique_in_var0 ∀'(#0 ∈' #1 ↔' (φ ↑ 1 ＠ 1))) :=
 begin
   apply allsI,
@@ -334,16 +434,12 @@ begin
 end
 
 /--
-  Proof scheme showing uniqueness of x₁ = { x | φ(x, x₂, ... ) } defined by a formula φ
-  for all x₁ ... xₙ, provided φ does not reference x₁.
-
-  Note: The formula shown is not necesserily a sentence.
-
-  Uses: separation for the formula φ with (k+2) free variables.
+  Proof scheme. Provides a formal oroof of `∃B ∀x(x ∈ B ↔ φ)`
+  from `∃B ∀x ( φ → x ∈ B)` by using the axiom of separation for `φ`.
 -/
 def separation_proof_scheme 
-  (φ k) (φ_h₁: closed (k+2) φ)         -- given a formula φ(x_1,...,x_{k+1})
-  (φ_h₂ : ∃ ϕ : formula L , φ = ϕ ↑ 1 ＠ 1) -- such that the x₂ is not among its free variables
+  (φ k) (φ_h₁: closed (k+2) φ)              -- given a formula φ(x_1,...,x_{k+1})
+  (φ_h₂ : ∃ ϕ : formula 𝒮 , φ = ϕ ↑ 1 ＠ 1) -- such that the x₂ is not among its free variables
   {Γ} (h : separation_ax φ φ_h₁ ∈ Γ)        -- ...
   (H : Γ ⊢ alls k ∃' ∀'(φ →' (#0 ∈' #1)))
   : Γ ⊢ alls k (∃' ∀'((#0 ∈' #1) ↔' φ)) :=
@@ -376,7 +472,7 @@ begin
         apply allE_var0,
         apply hypI,
         -- meta
-        rw set.image_insert_eq,
+        rw[set.image_insert_eq],
         left,
         cases φ_h₂ with ψ ψ_h,
         subst ψ_h,
@@ -424,8 +520,15 @@ begin
             simp } } } } }
 end
 
-def separation_proof_scheme'  (φ) (k) (φ_h: closed (k+2) (φ ↑ 1 ＠ 1))
-  {ψ : formula L} (ψ_h : ψ = alls k ∃' ∀'((#0 ∈' #1) ↔' (φ  ↑ 1 ＠ 1)))
+
+/--
+  QoL version of `separation_proof_scheme`.
+  
+  Proof scheme. Provides a formal proof `ψ`
+  from `∃B ∀x ( φ → x ∈ B)` and `ψ = ∃B ∀x(x ∈ B ↔ φ)`.
+-/
+def separation_proof_scheme' (φ) (k) (φ_h: closed (k+2) (φ ↑ 1 ＠ 1))
+  {ψ : formula 𝒮} (ψ_h : ψ = alls k ∃' ∀'((#0 ∈' #1) ↔' (φ  ↑ 1 ＠ 1)))
   {Γ} (h : separation.sentence (φ ↑ 1 ＠ 1) φ_h ∈ Γ)
   (H: Γ ⊢ alls k ∃' ∀'( φ  ↑ 1 ＠ 1  →' (#0 ∈' #1))) 
   : Γ ⊢ ψ  :=
@@ -435,7 +538,7 @@ begin
 end
 
 /-- 
-  A proof of the defining property of the singleton set `{a} := {a,a}`, 
+  Formal proof showing that `{a} := {a,a}` satisfies the defining property of the singleton set, 
   derived from the pairset axiom.
 
   Informally: `{pairset_ax} ⊢ ∀ a : {a} = { x | x = a }`.
@@ -486,8 +589,8 @@ end
   Informally: `Γ ⊢ φ` provided `φ = ∀ a : { a } = { x | x = a }`
   and `pairset_ax ∈ Γ`.
 -/
-def singleton_def' {Γ} {φ : formula L} (h₁: φ = ∀' ∀' (#0 ∈' ⦃ #1 ⦄ ↔' #0 =' #1)) (h₂ : pairset_ax ∈ Γ ) :
-  Γ  ⊢ φ  :=
+def singleton_def' {Γ} {φ : formula 𝒮} (h₁: φ = ∀' ∀' (#0 ∈' ⦃ #1 ⦄ ↔' #0 =' #1)) (h₂ : pairset_ax ∈ Γ ) :
+  Γ ⊢ φ  :=
 begin
   subst h₁,
   apply weak_singleton pairset_ax,
@@ -496,7 +599,7 @@ begin
 end
 
 /--
-  A formal proof of the defining property of the binary union `a ∪ b := ⋃{a,b}`
+  A formal proof showing that `a ∪ b := ⋃{a,b}` satisfies the defining property of the binary union,
   derived from the pairset and unionset axioms.
 
   Informally: `{pairset_ax, unionset_ax} ⊢ ∀b ∀a : a ∪ b = { x | x ∈ a ∨ x ∈ b }`.
@@ -635,7 +738,7 @@ end
   Informally: `Γ ⊢ φ` provided `φ =  ∀ b ∀ a : a ∪ b = { x | x ∈ a ∨ x ∈ b }`
   and `pairset_ax, unionset_ax ∈ Γ`.
 -/
-def binary_union_def' {Γ} {φ : formula L} (h₁: φ = ∀' ∀' ∀'(#0 ∈' ⋃ ⦃ #1, #2 ⦄ ↔' #0 ∈' #1 ∨' #0 ∈' #2) )
+def binary_union_def' {Γ} {φ : formula 𝒮} (h₁: φ = ∀' ∀' ∀'(#0 ∈' ⋃ ⦃ #1, #2 ⦄ ↔' #0 ∈' #1 ∨' #0 ∈' #2) )
   (h₂: pairset_ax ∈ Γ ) (h₃ : unionset_ax ∈ Γ) : Γ  ⊢ φ :=
 begin
   subst h₁,
@@ -651,7 +754,7 @@ begin
 end
 
 /--
-  A formal proof of the defining property of the successpor set `S(a) := a ∪ {a}` 
+  A formal proof showing that `S(a) := a ∪ {a}` satisfies the defining property of the successor set, 
   derived from the pairset and unionset axioms.
 
   Informally: `{pairset_ax, unionset_ax} ⊢  ∀a : S(a) = { x | x ∈ a ∨ x = a }`.
@@ -733,7 +836,9 @@ end
 
 
 /--
-  A formal proof that `ω` exists and is unique,
+  Formal proof that there (trivially) exists a set 
+  containing exactly the elements common to all inductive sets
+  and that such a set is unique,
   derived from the omega axiom and extensionality.
 
   Informally: `{omega_ax, extensionality} ⊢ ∃! w₀ : w₀ = { x | ∀ w : (w is inductive) →  x ∈ w }`.
@@ -793,7 +898,7 @@ begin
 end
 
 /-- 
-  A formal proof of `ω is inductive` derived from the omega axiom. 
+  A formal proof of `ω is inductive`, derived from the omega axiom. 
 -/
 def omega_inductive : {omega_ax} ⊢ ω is_inductive :=
 begin
@@ -866,10 +971,10 @@ begin
   { apply omega_subset_all_inductive', simp[izf_ax], },
 end
 
-/--
-  Main Theorem: IZF proves that ω is the smallest inductive set.
--/
-theorem omega_smallest_inductive_provable_witin_izf : 
+end izf_proofs
+
+/--  Main Theorem: IZF proves that ω is the smallest inductive set. -/
+theorem omega_smallest_inductive_provable_within_izf : 
   ((ω is_inductive) ∧' ∀'((#0 is_inductive) →' ω ⊆' #0)) is_provable_within izf_ax :=
 begin use omega_smallest_inductive end
 
