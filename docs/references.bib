@@ -1,3 +1,60 @@
+@techreport{AR01,
+  author      = {Peter Aczel and Michael Rathjen},
+  title       = {Notes on Constructive Set Theory},
+  institution = {Reports Institut Mittag-Leffler},
+  year        = {2001},
+  type        = {Mathematical Logic},
+  number      = {40}
+},
+
+@article{BU07,
+  title    = {A Head-to-Head Comparison of de Bruijn Indices and Names},
+  journal  = {Electronic Notes in Theoretical Computer Science},
+  volume   = {174},
+  number   = {5},
+  pages    = {53-67},
+  year     = {2007},
+  note     = {Proceedings of the First International Workshop on Logical Frameworks and Meta-Languages: Theory and Practice (LFMTP 2006)},
+  issn     = {1571-0661},
+  doi      = {https://doi.org/10.1016/j.entcs.2007.01.018},
+  author   = {Stefan Berghofer and Christian Urban},
+  keywords = {Proof assistants, lambda-calculi, de Bruijn indices, nominal logic work, Isabelle/HOL},
+  abstract = {Often debates about pros and cons of various techniques for formalising lambda-calculi rely on subjective arguments, such as de Bruijn indices are hard to read for humans or nominal approaches come close to the style of reasoning employed in informal proofs. In this paper we will compare four formalisations based on de Bruijn indices and on names from the nominal logic work, thus providing some hard facts about the pros and cons of these two formalisation techniques. We conclude that the relative merits of the different approaches, as usual, depend on what task one has at hand and which goals one pursues with a formalisation.}
+},
+@book{CH07,
+  author    = {Ian Chiswell and
+               Wilfrid Hodges},
+  title     = {Mathematical logic},
+  series    = {Oxford texts in logic},
+  volume    = {3},
+  publisher = {Clarendon Press},
+  year      = {2007},
+  isbn      = {978-0-19-921562-1}
+}
+
+@misc{coq-Dblib,
+  author       = {Pottier, François},
+  title        = {Dblib},
+  year         = {2013},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/coq-community/dblib}},
+  commit       = {2db430bf4b0f580a208495264136423689e050b4}
+}
+
+@article{DB72,
+  title    = {Lambda calculus notation with nameless dummies, a tool for automatic formula manipulation, with application to the Church-Rosser theorem},
+  journal  = {Indagationes Mathematicae (Proceedings)},
+  volume   = {75},
+  number   = {5},
+  pages    = {381-392},
+  year     = {1972},
+  issn     = {1385-7258},
+  doi      = {https://doi.org/10.1016/1385-7258(72)90034-0},
+  author   = {N.G {de Bruijn}},
+  abstract = {In ordinary lambda calculus the occurrences of a bound variable are made recognizable by the use of one and the same (otherwise irrelevant) name at all occurrences. This convention is known to cause considerable trouble in cases of substitution. In the present paper a different notational system is developed, where occurrences of variables are indicated by integers giving the “distance” to the binding λ instead of a name attached to that λ. The system is claimed to be efficient for automatic formula manipulation as well as for metalingual discussion. As an example the most essential part of a proof of the Church-Rosser theorem is presented in this namefree calculus.}
+}
+
 @book{EBB03,
   title     = {Einf\"{u}hrung in die {M}engenlehre},
   author    = {Ebbinghaus, Heinz-Dieter},
@@ -5,83 +62,60 @@
   isbn      = {3-8274-1411-3},
   year      = {2003},
   edition   = {4},
-  pages     = {viii+256}
-},
+  pages     = {256},
+  series    = {Hochschultaschenbuch},
+  isbn      = {3-8274-1411-3},
+  year      = {2003},
+  address   = {Heidelberg, Berlin}
+}
+
+@inproceedings{HD20,
+  author    = {Han, Jesse Michael and van Doorn, Floris},
+  title     = {A Formal Proof of the Independence of the Continuum Hypothesis},
+  year      = {2020},
+  isbn      = {9781450370974},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  doi       = {https://doi.org/10.1145/3372885.3373826},
+  abstract  = {We describe a formal proof of the independence of the continuum hypothesis (CH) in the Lean theorem prover. We use Boolean-valued models to give forcing arguments for both directions, using Cohen forcing for the consistency of ¬ CH and a σ-closed forcing for the consistency of CH.},
+  booktitle = {Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs},
+  pages     = {353–366},
+  numpages  = {14},
+  keywords  = {Lean, continuum hypothesis, forcing, set theory, Interactive theorem proving, Boolean-valued models, formal verification, ZFC},
+  location  = {New Orleans, LA, USA},
+  series    = {CPP 2020}
+}
+
 
 @book{HR04,
-   title     = {Logic in computer science: modelling and reasoning about systems},
-   author    = {Michael Huth, Mark Ryan},
-   publisher = {Cambridge University Press},
-   year      = {2004},
-   edition   = {2}
+  author    = {Huth, Michael and Ryan, Mark},
+  title     = {Logic in Computer Science: Modelling and Reasoning about Systems},
+  publisher = {Cambridge University Press},
+  year      = {2004},
+  edition   = {2}
+}
+
+
+@book{KUN83,
+  author    = {Kunen, Kenneth},
+  title     = {Set Theory},
+  series    = {Studies in Logic and the Foundations of Mathematics},
+  volume    = {102},
+  note      = {An introduction to independence proofs,
+              Reprint of the 1980 original},
+  publisher = {North-Holland Publishing Co., Amsterdam},
+  year      = {1983},
+  pages     = {xvi+313}
+}
+
+@incollection{LC20,
+  author       = {Crosilla, Laura},
+  title        = {{Set Theory: Constructive and Intuitionistic ZF}},
+  booktitle    = {The {Stanford} Encyclopedia of Philosophy},
+  editor       = {Edward N. Zalta},
+  howpublished = {\url{https://plato.stanford.edu/archives/sum2020/entries/set-theory-constructive/}},
+  year         = {2020},
+  edition      = {Summer 2020},
+  publisher    = {Metaphysics Research Lab, Stanford University}
 },
-@TECHREPORT{AR01,
-  author = {Peter Aczel and Michael Rathjen},
-  title = {Notes on Constructive Set Theory},
-  institution = {Reports Institut Mittag-Leffler},
-  year = {2000/2001},
-  type = {Mathematical Logic},
-  number = {40},
-  note = {Available at \url{http://www.ml.kva.se/preprints/meta/AczelMon_Sep_24_09_16_56.rdf.html}}
-}
-
-@InCollection{LC20,
-	author       =	{Crosilla, Laura},
-	title        =	{{Set Theory: Constructive and Intuitionistic ZF}},
-	booktitle    =	{The {Stanford} Encyclopedia of Philosophy},
-	editor       =	{Edward N. Zalta},
-	howpublished =	{\url{https://plato.stanford.edu/archives/sum2020/entries/set-theory-constructive/}},
-	year         =	{2020},
-	edition      =	{Summer 2020},
-	publisher    =	{Metaphysics Research Lab, Stanford University}
-}
-
-@article{DB72,
-  title = {Lambda calculus notation with nameless dummies, a tool for automatic formula manipulation, with application to the Church-Rosser theorem},
-  journal = {Indagationes Mathematicae (Proceedings)},
-  volume = {75},
-  number = {5},
-  pages = {381-392},
-  year = {1972},
-  issn = {1385-7258},
-  doi = {https://doi.org/10.1016/1385-7258(72)90034-0},
-  url = {https://www.sciencedirect.com/science/article/pii/1385725872900340},
-  author = {N.G {de Bruijn}},
-  abstract = {In ordinary lambda calculus the occurrences of a bound variable are made recognizable by the use of one and the same (otherwise irrelevant) name at all occurrences. This convention is known to cause considerable trouble in cases of substitution. In the present paper a different notational system is developed, where occurrences of variables are indicated by integers giving the “distance” to the binding λ instead of a name attached to that λ. The system is claimed to be efficient for automatic formula manipulation as well as for metalingual discussion. As an example the most essential part of a proof of the Church-Rosser theorem is presented in this namefree calculus.}
-}
-
-@inproceedings{HvD20,
-  author = {Han, Jesse Michael and van Doorn, Floris},
-  title = {A Formal Proof of the Independence of the Continuum Hypothesis},
-  year = {2020},
-  isbn = {9781450370974},
-  publisher = {Association for Computing Machinery},
-  address = {New York, NY, USA},
-  url = {https://doi.org/10.1145/3372885.3373826},
-  doi = {10.1145/3372885.3373826},
-  abstract = {We describe a formal proof of the independence of the continuum hypothesis (CH) in the Lean theorem prover. We use Boolean-valued models to give forcing arguments for both directions, using Cohen forcing for the consistency of ¬ CH and a σ-closed forcing for the consistency of CH.},
-  booktitle = {Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs},
-  pages = {353–366},
-  numpages = {14},
-  keywords = {Lean, continuum hypothesis, forcing, set theory, Interactive theorem proving, Boolean-valued models, formal verification, ZFC},
-  location = {New Orleans, LA, USA},
-  series = {CPP 2020}
-}
-
-@article{BH07,
-  title = {A Head-to-Head Comparison of de Bruijn Indices and Names},
-  journal = {Electronic Notes in Theoretical Computer Science},
-  volume = {174},
-  number = {5},
-  pages = {53-67},
-  year = {2007},
-  note = {Proceedings of the First International Workshop on Logical Frameworks and Meta-Languages: Theory and Practice (LFMTP 2006)},
-  issn = {1571-0661},
-  doi = {https://doi.org/10.1016/j.entcs.2007.01.018},
-  url = {https://www.sciencedirect.com/science/article/pii/S1571066107002319},
-  author = {Stefan Berghofer and Christian Urban},
-  keywords = {Proof assistants, lambda-calculi, de Bruijn indices, nominal logic work, Isabelle/HOL},
-  abstract = {Often debates about pros and cons of various techniques for formalising lambda-calculi rely on subjective arguments, such as de Bruijn indices are hard to read for humans or nominal approaches come close to the style of reasoning employed in informal proofs. In this paper we will compare four formalisations based on de Bruijn indices and on names from the nominal logic work, thus providing some hard facts about the pros and cons of these two formalisation techniques. We conclude that the relative merits of the different approaches, as usual, depend on what task one has at hand and which goals one pursues with a formalisation.}
-}
-
   
